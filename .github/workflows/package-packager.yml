@@ -1,0 +1,37 @@
+name: Package and Release Module
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  package:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Joomla Extension Packager
+        uses: N6REJ/joomla-packager@799786b9435300628c1d44488c7959388e6e30ab # 2026.9.27
+        id: package
+        with:
+          extension-name: 'mod_bearsamppai'
+          extension-xml: 'mod_bearsamppai.xml'
+          extension-type: 'module'
+          author: 'Bearsampp'
+          copyright-holder: 'Bearsampp'
+          copyright-start-year: '2026'
+          license-file: 'LICENSE'
+          update-joomla-server: 'true'
+          commit-changes: 'true'
+          github-token: ${{ secrets.GH_PAT }}

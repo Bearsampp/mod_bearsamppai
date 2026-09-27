@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="module" client="site" method="upgrade">
+	<name>mod_bearsamppai</name>
+	<author>Bearsampp</author>
+	<creationDate>2026-09</creationDate>
+	<copyright>(C) 2026 Bearsampp</copyright>
+	<license>GNU General Public License version 3; see LICENSE</license>
+	<authorEmail>support@bearsampp.com</authorEmail>
+	<authorUrl>https://bearsampp.com</authorUrl>
+	<version>2026.09.27</version>
+	<description>MOD_BEARSAMPPAI_XML_DESCRIPTION</description>
+	<namespace path="src">Bearsampp\Module\BearsamppAI</namespace>
+	<files>
+		<folder module="mod_bearsamppai">services</folder>
+		<filename>helper.php</filename>
+		<folder>src</folder>
+		<folder>tmpl</folder>
+		<folder>media</folder>
+	</files>
+	<languages>
+		<language tag="en-GB">language/en-GB/mod_bearsamppai.ini</language>
+		<language tag="en-GB">language/en-GB/mod_bearsamppai.sys.ini</language>
+	</languages>
+	<updateservers>
+		<server type="extension" priority="1" name="Bearsampp AI Updates">https://raw.githubusercontent.com/Bearsampp/mod_bearsamppai/main/updates.xml</server>
+	</updateservers>
+	<config>
+		<fields name="params">
+			<fieldset name="basic">
+				<field
+					name="show_articles"
+					type="radio"
+					label="MOD_BEARSAMPPAI_FIELD_SHOW_ARTICLES_LABEL"
+					layout="joomla.form.field.radio.switcher"
+					default="1"
+					filter="integer"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+				<field
+					name="articles_category_id"
+					type="category"
+					label="MOD_BEARSAMPPAI_FIELD_ARTICLES_CATEGORY_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_ARTICLES_CATEGORY_DESC"
+					extension="com_content"
+					multiple="false"
+					filter="uint"
+				/>
+
+				<field
+					name="articles_tag_ids"
+					type="tag"
+					label="MOD_BEARSAMPPAI_FIELD_ARTICLES_TAGS_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_ARTICLES_TAGS_DESC"
+					multiple="true"
+				/>
+
+				<field
+					name="articles_count"
+					type="number"
+					label="MOD_BEARSAMPPAI_FIELD_ARTICLES_COUNT_LABEL"
+					default="5"
+					filter="integer"
+					min="1"
+					max="50"
+					validate="number"
+				/>
+
+				<field
+					name="show_forum"
+					type="radio"
+					label="MOD_BEARSAMPPAI_FIELD_SHOW_FORUM_LABEL"
+					layout="joomla.form.field.radio.switcher"
+					default="1"
+					filter="integer"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+				<field
+					name="forum_count"
+					type="number"
+					label="MOD_BEARSAMPPAI_FIELD_FORUM_COUNT_LABEL"
+					default="5"
+					filter="integer"
+					min="1"
+					max="50"
+					validate="number"
+				/>
+
+				<field
+					name="show_faq"
+					type="radio"
+					label="MOD_BEARSAMPPAI_FIELD_SHOW_FAQ_LABEL"
+					layout="joomla.form.field.radio.switcher"
+					default="1"
+					filter="integer"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+				<field
+					name="faq_category_id"
+					type="category"
+					label="MOD_BEARSAMPPAI_FIELD_FAQ_CATEGORY_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_FAQ_CATEGORY_DESC"
+					extension="com_content"
+					multiple="false"
+					filter="uint"
+				/>
+
+				<field
+					name="faq_count"
+					type="number"
+					label="MOD_BEARSAMPPAI_FIELD_FAQ_COUNT_LABEL"
+					default="10"
+					filter="integer"
+					min="1"
+					max="100"
+					validate="number"
+				/>
+			</fieldset>
+
+			<fieldset name="ai" label="MOD_BEARSAMPPAI_FIELDSET_AI_LABEL">
+				<field
+					name="show_chat"
+					type="radio"
+					label="MOD_BEARSAMPPAI_FIELD_SHOW_CHAT_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_SHOW_CHAT_DESC"
+					layout="joomla.form.field.radio.switcher"
+					default="0"
+					filter="integer"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+				<field
+					name="gemini_api_key"
+					type="text"
+					label="MOD_BEARSAMPPAI_FIELD_GEMINI_KEY_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_GEMINI_KEY_DESC"
+					filter="raw"
+				/>
+
+				<field
+					name="gemini_model"
+					type="text"
+					label="MOD_BEARSAMPPAI_FIELD_GEMINI_MODEL_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_GEMINI_MODEL_DESC"
+					default="gemini-2.5-flash"
+				/>
+
+				<field
+					name="gemini_endpoint"
+					type="text"
+					label="MOD_BEARSAMPPAI_FIELD_GEMINI_ENDPOINT_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_GEMINI_ENDPOINT_DESC"
+					default="https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+				/>
+
+				<field
+					name="max_response_tokens"
+					type="number"
+					label="MOD_BEARSAMPPAI_FIELD_MAX_TOKENS_LABEL"
+					default="512"
+					filter="integer"
+					min="64"
+					max="4096"
+					validate="number"
+				/>
+
+				<field
+					name="temperature"
+					type="number"
+					label="MOD_BEARSAMPPAI_FIELD_TEMPERATURE_LABEL"
+					default="0.2"
+					filter="float"
+					min="0"
+					max="1"
+					step="0.05"
+					validate="number"
+				/>
+
+				<field
+					name="request_timeout"
+					type="number"
+					label="MOD_BEARSAMPPAI_FIELD_TIMEOUT_LABEL"
+					default="30"
+					filter="integer"
+					min="5"
+					max="120"
+					validate="number"
+				/>
+
+				<field
+					name="chat_context_limit"
+					type="number"
+					label="MOD_BEARSAMPPAI_FIELD_CONTEXT_LIMIT_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CONTEXT_LIMIT_DESC"
+					default="20000"
+					filter="integer"
+					min="1000"
+					max="50000"
+					validate="number"
+				/>
+
+				<field
+					name="chat_heading"
+					type="text"
+					label="MOD_BEARSAMPPAI_FIELD_CHAT_HEADING_LABEL"
+					default="Ask Bearsampp"
+				/>
+
+				<field
+					name="chat_placeholder"
+					type="text"
+					label="MOD_BEARSAMPPAI_FIELD_CHAT_PLACEHOLDER_LABEL"
+					default="Ask a question about Bearsampp..."
+				/>
+
+				<field
+					name="chat_no_data_message"
+					type="text"
+					label="MOD_BEARSAMPPAI_FIELD_CHAT_NODATA_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CHAT_NODATA_DESC"
+					default="I'm sorry, I don't know how to answer that"
+				/>
+
+				<field
+					name="chat_position"
+					type="list"
+					label="MOD_BEARSAMPPAI_FIELD_CHAT_POSITION_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CHAT_POSITION_DESC"
+					default="bottom-right"
+					filter="string"
+					validate="options"
+					>
+					<option value="bottom-right">MOD_BEARSAMPPAI_POSITION_BOTTOM_RIGHT</option>
+					<option value="bottom-left">MOD_BEARSAMPPAI_POSITION_BOTTOM_LEFT</option>
+					<option value="middle-right">MOD_BEARSAMPPAI_POSITION_MIDDLE_RIGHT</option>
+					<option value="middle-left">MOD_BEARSAMPPAI_POSITION_MIDDLE_LEFT</option>
+				</field>
+
+				<field
+					name="chat_width"
+					type="number"
+					label="MOD_BEARSAMPPAI_FIELD_CHAT_WIDTH_LABEL"
+					default="400"
+					filter="integer"
+					min="260"
+					max="900"
+					validate="number"
+				/>
+
+				<field
+					name="chat_height"
+					type="number"
+					label="MOD_BEARSAMPPAI_FIELD_CHAT_HEIGHT_LABEL"
+					default="500"
+					filter="integer"
+					min="300"
+					max="1200"
+					validate="number"
+				/>
+
+				<field
+					name="chat_offset_x"
+					type="number"
+					label="MOD_BEARSAMPPAI_FIELD_CHAT_OFFSET_X_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CHAT_OFFSET_DESC"
+					default="20"
+					filter="integer"
+					min="0"
+					max="200"
+					validate="number"
+				/>
+
+				<field
+					name="chat_offset_y"
+					type="number"
+					label="MOD_BEARSAMPPAI_FIELD_CHAT_OFFSET_Y_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CHAT_OFFSET_DESC"
+					default="20"
+					filter="integer"
+					min="0"
+					max="200"
+					validate="number"
+				/>
+
+				<field
+					name="chat_theme"
+					type="list"
+					label="MOD_BEARSAMPPAI_FIELD_CHAT_THEME_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CHAT_THEME_DESC"
+					default="auto"
+					filter="string"
+					validate="options"
+					>
+					<option value="auto">MOD_BEARSAMPPAI_THEME_AUTO</option>
+					<option value="light">MOD_BEARSAMPPAI_THEME_LIGHT</option>
+					<option value="dark">MOD_BEARSAMPPAI_THEME_DARK</option>
+				</field>
+
+				<field
+					name="chat_show_copy"
+					type="radio"
+					label="MOD_BEARSAMPPAI_FIELD_CHAT_SHOW_COPY_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CHAT_SHOW_COPY_DESC"
+					layout="joomla.form.field.radio.switcher"
+					default="1"
+					filter="integer"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+				<field
+					name="chat_greeting"
+					type="textarea"
+					label="MOD_BEARSAMPPAI_FIELD_CHAT_GREETING_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CHAT_GREETING_DESC"
+					rows="3"
+					default="Hello! I'm your AI assistant. Ask me anything about our knowledge base and I'll help you find the information you need."
+				/>
+
+				<field
+					name="chat_show_status"
+					type="radio"
+					label="MOD_BEARSAMPPAI_FIELD_CHAT_SHOW_STATUS_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CHAT_SHOW_STATUS_DESC"
+					layout="joomla.form.field.radio.switcher"
+					default="0"
+					filter="integer"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+				<field
+					name="chat_status_interval"
+					type="number"
+					label="MOD_BEARSAMPPAI_FIELD_CHAT_STATUS_INTERVAL_LABEL"
+					default="30"
+					filter="integer"
+					min="10"
+					max="600"
+					validate="number"
+				/>
+			</fieldset>
+
+			<fieldset name="advanced">
+				<field
+					name="layout"
+					type="modulelayout"
+					label="JFIELD_ALT_LAYOUT_LABEL"
+					class="form-select"
+					validate="moduleLayout"
+				/>
+
+				<field
+					name="moduleclass_sfx"
+					type="textarea"
+					label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL"
+					rows="3"
+					validate="CssIdentifier"
+				/>
+
+				<field
+					name="cache"
+					type="list"
+					label="COM_MODULES_FIELD_CACHING_LABEL"
+					default="1"
+					filter="integer"
+					validate="options"
+					>
+					<option value="1">JGLOBAL_USE_GLOBAL</option>
+					<option value="0">COM_MODULES_FIELD_VALUE_NOCACHING</option>
+				</field>
+
+				<field
+					name="cache_time"
+					type="number"
+					label="COM_MODULES_FIELD_CACHE_TIME_LABEL"
+					default="900"
+					filter="integer"
+				/>
+
+				<field
+					name="cachemode"
+					type="hidden"
+					default="static"
+					>
+					<option value="static"></option>
+				</field>
+			</fieldset>
+		</fields>
+	</config>
+</extension>

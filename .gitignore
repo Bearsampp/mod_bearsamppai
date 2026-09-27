@@ -1,0 +1,12 @@
+# Build output from the Joomla Packager action
+build/
+*.zip
+
+# Dependencies
+node_modules/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
