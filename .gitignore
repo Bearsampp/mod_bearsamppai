@@ -2,6 +2,9 @@
 build/
 *.zip
 
+# Local documentation drafts - not part of the extension source
+docs/
+
 # Dependencies
 node_modules/
 

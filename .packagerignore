@@ -1,0 +1,9 @@
+# Files excluded from the installable ZIP by the Joomla Packager action.
+# Patterns are rsync excludes, matched against the working tree.
+#
+# docs/ holds local documentation drafts (article HTML, stylesheet, JED copy,
+# runbooks). It is git-ignored, so it never reaches git or the content
+# fingerprint - but the packager builds with `rsync -a ./`, which copies the
+# working tree rather than a git archive. Without this line the folder would
+# ship inside every release ZIP.
+docs/
