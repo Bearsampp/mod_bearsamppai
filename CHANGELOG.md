@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Force version 2026.09.27 to rebuild the package without the stray directory listing ([2f059b9](https://github.com/Bearsampp/mod_bearsamppai/commit/2f059b9))
 * Update version to 2026.09.27 [skip ci] ([2033345](https://github.com/Bearsampp/mod_bearsamppai/commit/2033345))
 * Pin joomla-packager to 2026.9.27.3 and force a 2026.09.27 rebuild ([25684ed](https://github.com/Bearsampp/mod_bearsamppai/commit/25684ed))
+* Update version to 2026.09.27 [skip ci] ([8cb9634](https://github.com/Bearsampp/mod_bearsamppai/commit/8cb9634))
 
 ### Removed
 
