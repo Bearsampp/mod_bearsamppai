@@ -10,6 +10,10 @@
 	<version>2026.09.28.1</version>
 	<description>MOD_BEARSAMPPAI_XML_DESCRIPTION</description>
 	<namespace path="src">Bearsampp\Module\BearsamppAI</namespace>
+	<dependencies>
+		<php version="8.1" />
+		<joomla version="5.4" />
+	</dependencies>
 	<files>
 		<folder module="mod_bearsamppai">services</folder>
 		<filename>helper.php</filename>
