@@ -52,10 +52,17 @@ class ModuleHelper implements DatabaseAwareInterface
 
         $model->setState('list.limit', (int) $params->get('articles_count', 5));
 
-        $catid = (int) $params->get('articles_category_id', 0);
+        $categories = array_values(
+            array_filter(
+                ArrayHelper::toInteger((array) $params->get('articles_category_id', [])),
+                static fn ($id) => $id > 0
+            )
+        );
 
-        if ($catid > 0) {
-            $model->setState('filter.category_id', $catid);
+        if (count($categories) === 1) {
+            $model->setState('filter.category_id', $categories[0]);
+        } elseif (count($categories) > 1) {
+            $model->setState('filter.category_id', $categories);
         }
 
         $tagIds = array_values(array_filter(ArrayHelper::toInteger((array) $params->get('articles_tag_ids', []))));

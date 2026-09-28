@@ -239,12 +239,18 @@ class BearsamppaiHelper
 		}
 
 		// Articles (same scope as the rendered module).
-		$catid = (int) $params->get('articles_category_id', 0);
+		$categories = array_values(
+			array_filter(
+				ArrayHelper::toInteger((array) $params->get('articles_category_id', [])),
+				static fn ($id) => $id > 0
+			)
+		);
+
 		$tags  = array_values(array_filter(ArrayHelper::toInteger((array) $params->get('articles_tag_ids', []))));
 		$limit = max((int) $params->get('articles_count', 5), 1);
 		$limit = min($limit, 50);
 
-		$items = $this->loadArticles($params, $limit, $catid, $tags);
+		$items = $this->loadArticles($params, $limit, $categories, $tags);
 
 		foreach ($items as $item) {
 			$text = strip_tags((string) ($item->introtext ?? '') . "\n" . (string) ($item->fulltext ?? ''));
@@ -260,7 +266,7 @@ class BearsamppaiHelper
 			$faqLimit = max((int) $params->get('faq_count', 10), 1);
 			$faqLimit = min($faqLimit, 100);
 
-			$faqItems = $this->loadArticles($params, $faqLimit, $faqCatid, [], 'ordering', 'ASC');
+			$faqItems = $this->loadArticles($params, $faqLimit, [$faqCatid], [], 'ordering', 'ASC');
 
 			foreach ($faqItems as $item) {
 				$text = strip_tags((string) ($item->introtext ?? '') . "\n" . (string) ($item->fulltext ?? ''));
@@ -288,7 +294,7 @@ class BearsamppaiHelper
 	 *
 	 * @param   Registry   $params       The module parameters.
 	 * @param   int        $limit        Maximum number of items.
-	 * @param   int        $catid        Category id filter (0 to ignore).
+	 * @param   int[]      $categories   Category id filters (empty to ignore).
 	 * @param   int[]      $tags         Tag id filters (empty to ignore).
 	 * @param   string     $ordering     Column to order by (without alias prefix).
 	 * @param   string     $direction    Ordering direction.
@@ -297,7 +303,7 @@ class BearsamppaiHelper
 	 *
 	 * @since   2.1.0
 	 */
-	private function getArticlesModel(Registry $params, int $limit, int $catid, array $tags, string $ordering = 'publish_up', string $direction = 'DESC')
+	private function getArticlesModel(Registry $params, int $limit, array $categories, array $tags, string $ordering = 'publish_up', string $direction = 'DESC')
 	{
 		$app = Factory::getApplication();
 
@@ -322,8 +328,10 @@ class BearsamppaiHelper
 		$model->setState('list.ordering', 'a.' . $ordering);
 		$model->setState('list.direction', $direction);
 
-		if ($catid > 0) {
-			$model->setState('filter.category_id', $catid);
+		if (count($categories) === 1) {
+			$model->setState('filter.category_id', (int) reset($categories));
+		} elseif (count($categories) > 1) {
+			$model->setState('filter.category_id', $categories);
 		}
 
 		if (count($tags) === 1) {
@@ -340,7 +348,7 @@ class BearsamppaiHelper
 	 *
 	 * @param   Registry  $params     The module parameters.
 	 * @param   int       $limit      Maximum number of items.
-	 * @param   int       $catid      Category id filter (0 to ignore).
+	 * @param   int[]     $categories Category id filters (empty to ignore).
 	 * @param   int[]     $tags       Tag id filters (empty to ignore).
 	 * @param   string    $ordering   Column to order by.
 	 * @param   string    $direction  Ordering direction.
@@ -349,10 +357,10 @@ class BearsamppaiHelper
 	 *
 	 * @since   2.1.0
 	 */
-	private function loadArticles(Registry $params, int $limit, int $catid, array $tags, string $ordering = 'publish_up', string $direction = 'DESC'): array
+	private function loadArticles(Registry $params, int $limit, array $categories, array $tags, string $ordering = 'publish_up', string $direction = 'DESC'): array
 	{
 		try {
-			$model = $this->getArticlesModel($params, $limit, $catid, $tags, $ordering, $direction);
+			$model = $this->getArticlesModel($params, $limit, $categories, $tags, $ordering, $direction);
 
 			if ($model === null) {
 				return [];

@@ -6,7 +6,7 @@ A Joomla 5.4/6 site module that aggregates your recent articles, Kunena forum to
 
 - **Knowledge base chat (Gemini)** — a floating chat widget backed by the Google Gemini API (OpenAI-compatible endpoint, free tier supported). Answers are grounded strictly in your site content.
 - **Prompt-grounded answers** — the AI receives articles, FAQ entries and forum topics as context and is instructed to answer only from that content, falling back to a configurable message when no knowledge matches.
-- **Recent articles block** — newest published articles, optionally restricted by a single category and/or tags.
+- **Recent articles block** — newest published articles, optionally restricted to one or more categories and/or tags.
 - **Forum topics block** — latest published Kunena topics with category and last-post info.
 - **FAQ accordion block** — articles from a chosen category rendered as Bootstrap collapse accordions, first item open by default.
 - **Customizable chat UI**:
@@ -41,7 +41,7 @@ A Joomla 5.4/6 site module that aggregates your recent articles, Kunena forum to
 | Parameter | Description |
 | --- | --- |
 | Show recent articles | Toggle the recent articles block. |
-| Articles category | Restrict the articles block to a single category (unselected = all published). |
+| Articles categories | Restrict the articles block to one or more categories (unselected = all published). |
 | Article tags | Only show articles that have any of these tags (unselected = ignore tags). |
 | Number of articles to show | 1–50, default 5. |
 | Show forum topics | Toggle the Kunena topics block (Kunena must be installed). |

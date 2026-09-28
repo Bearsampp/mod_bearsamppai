@@ -45,8 +45,8 @@
 					label="MOD_BEARSAMPPAI_FIELD_ARTICLES_CATEGORY_LABEL"
 					description="MOD_BEARSAMPPAI_FIELD_ARTICLES_CATEGORY_DESC"
 					extension="com_content"
-					multiple="false"
-					filter="uint"
+					multiple="true"
+					layout="joomla.form.field.list-fancy-select"
 				/>
 
 				<field
