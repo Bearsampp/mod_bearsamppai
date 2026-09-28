@@ -152,7 +152,7 @@ $statusChecking  = Text::_('MOD_BEARSAMPPAI_CHAT_STATUS_CHECKING');
 			<label
 				class="visually-hidden"
 				for="mod-bearsamppai-chat-input-<?php echo (int) $module->id; ?>">
-				<?php echo htmlspecialchars(Text::_('MOD_BEARSAMPPAI_CHAT_INPUT_LABEL'), 'ENT_QUOTES', 'UTF-8'); ?>
+				<?php echo htmlspecialchars(Text::_('MOD_BEARSAMPPAI_CHAT_INPUT_LABEL'), ENT_QUOTES, 'UTF-8'); ?>
 			</label>
 			<input
 				type="text"
