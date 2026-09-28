@@ -32,6 +32,7 @@ jobs:
           copyright-holder: 'Bearsampp'
           copyright-start-year: '2026'
           license-file: 'LICENSE'
+          manual-version: '2026.09.27'
           update-joomla-server: 'true'
           commit-changes: 'true'
           github-token: ${{ secrets.GH_PAT }}
