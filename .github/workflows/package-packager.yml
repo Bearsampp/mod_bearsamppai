@@ -22,7 +22,7 @@ jobs:
           token: ${{ secrets.GH_PAT }}
 
       - name: Joomla Extension Packager
-        uses: N6REJ/joomla-packager@d69f73b45490440c0034c0437364ede325d50582 # 2026.9.27.2
+        uses: N6REJ/joomla-packager@74fe076b44ff8ed325c0dd21eab650d5453835b2 # 2026.9.27.3
         id: package
         with:
           extension-name: 'mod_bearsamppai'
@@ -32,6 +32,7 @@ jobs:
           copyright-holder: 'Bearsampp'
           copyright-start-year: '2026'
           license-file: 'LICENSE'
+          manual-version: '2026.09.27'
           update-joomla-server: 'true'
           commit-changes: 'true'
           github-token: ${{ secrets.GH_PAT }}
