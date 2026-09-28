@@ -41,17 +41,11 @@ class Dispatcher extends AbstractModuleDispatcher implements HelperFactoryAwareI
 
         $helper = $this->getHelperFactory()->getHelper('ModuleHelper');
 
-        if ((int) $data['params']->get('show_articles', 1) === 1) {
-            $data['articles'] = $helper->getArticles($data['params'], $this->getApplication());
-        }
+        // Fetch articles for AI knowledge base context
+        $data['articles'] = $helper->getArticles($data['params'], $this->getApplication());
 
-        if ((int) $data['params']->get('show_forum', 1) === 1) {
-            $data['forumTopics'] = $helper->getForumTopics($data['params'], $this->getApplication());
-        }
-
-        if ((int) $data['params']->get('show_faq', 1) === 1) {
-            $data['faqItems'] = $helper->getFaqItems($data['params'], $this->getApplication());
-        }
+        // Fetch forum topics for AI knowledge base context
+        $data['forumTopics'] = $helper->getForumTopics($data['params'], $this->getApplication());
 
         return $data;
     }
