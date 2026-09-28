@@ -22,7 +22,7 @@ jobs:
           token: ${{ secrets.GH_PAT }}
 
       - name: Joomla Extension Packager
-        uses: N6REJ/joomla-packager@316d835d092b8e84328e838efc522055727c8407 # main - packaged updates.xml synced to the build version
+        uses: N6REJ/joomla-packager@316d835d092b8e84328e838efc522055727c8407 # 2026.9.28 - packaged updates.xml synced to the build version
         id: package
         with:
           extension-name: 'mod_bearsamppai'

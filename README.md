@@ -127,7 +127,7 @@ All variables have a matching set of dark values under `[data-theme-scheme="dark
 
 ## Development
 
-The repository is the extension source; the install ZIP is produced by a GitHub Actions workflow using [Joomla Packager](https://github.com/N6REJ/joomla-packager) on every merged PR to `main` and via manual workflow dispatch. The action is pinned to a commit SHA (`316d835`, currently `main`) rather than a branch, so packaging cannot change under you without a deliberate bump.
+The repository is the extension source; the install ZIP is produced by a GitHub Actions workflow using [Joomla Packager](https://github.com/N6REJ/joomla-packager) on every merged PR to `main` and via manual workflow dispatch. The action is pinned to a commit SHA (`316d835`, released as `2026.9.28`) rather than a branch, so packaging cannot change under you without a deliberate bump.
 
 ### Releases
 
