@@ -127,13 +127,13 @@ All variables have a matching set of dark values under `[data-theme-scheme="dark
 
 ## Development
 
-The repository is the extension source; the install ZIP is produced by a GitHub Actions workflow using [Joomla Packager](https://github.com/N6REJ/joomla-packager) on every merged PR to `main` and via manual workflow dispatch. The action is pinned to a commit SHA (`799786b`, release `2026.9.27`) rather than a branch, so packaging cannot change under you without a deliberate bump.
+The repository is the extension source; the install ZIP is produced by a GitHub Actions workflow using [Joomla Packager](https://github.com/N6REJ/joomla-packager) on every merged PR to `main` and via manual workflow dispatch. The action is pinned to a commit SHA (`d69f73b`, release `2026.9.27.2`) rather than a branch, so packaging cannot change under you without a deliberate bump.
 
 ### Releases
 
-Versions are **date-based** (`2026.09.27`, `2026.09.27.1`, …). The packager generates the version itself and ignores the manifest `<version>`, so each run produces a new tag, a new `mod_bearsamppai_<version>.zip` release asset, and a version bump committed back to `main` (`commit-changes: 'true'`). The manifest carries a date-based version so a freshly installed copy and the feed agree.
+Versions are **date-based** (`2026.09.27`, `2026.09.28`, …). The packager generates the version itself and ignores the manifest `<version>`, so each run produces a new tag, a new `mod_bearsamppai_<version>.zip` release asset, and a version bump committed back to `main` (`commit-changes: 'true'`). The manifest carries a date-based version so a freshly installed copy and the feed agree.
 
-Re-running a failed job does not create a second release: if the computed version is already tagged at the same commit, the release steps are skipped.
+Re-running the workflow does **not** create a second release. The packager fingerprints the files that ship, ignoring the version bump, changelog, update feed and CI config, and reuses the existing version when nothing a user would install has changed. Re-run the job or dispatch it again as often as you like — installed sites only see a prompt when there is genuinely something new.
 
 ### Update server
 
