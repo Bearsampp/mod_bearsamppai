@@ -136,51 +136,55 @@ class ModuleHelper implements DatabaseAwareInterface
     {
         $limit = (int) $params->get('forum_count', 5);
 
-        $db    = $this->getDatabase();
-        $query = $db->getQuery(true);
+        try {
+            $db    = $this->getDatabase();
+            $query = $db->getQuery(true);
 
-        $query->select(
-            [
-                $db->quoteName('t.id'),
-                $db->quoteName('t.category_id'),
-                $db->quoteName('t.subject'),
-                $db->quoteName('t.replies'),
-                $db->quoteName('t.hits'),
-                $db->quoteName('t.last_post_time'),
-                $db->quoteName('c.name', 'category_title'),
-                $db->quoteName('c.alias', 'category_alias'),
-                $db->quoteName('m.userid', 'last_post_userid'),
-                $db->quoteName('m.name', 'last_post_name'),
-            ]
-        )
-            ->from($db->quoteName('#__kunena_topics', 't'))
-            ->innerJoin(
-                $db->quoteName('#__kunena_categories', 'c')
-                . ' ON c.id = t.category_id AND c.published = 1'
+            $query->select(
+                [
+                    $db->quoteName('t.id'),
+                    $db->quoteName('t.category_id'),
+                    $db->quoteName('t.subject'),
+                    $db->quoteName('t.hits'),
+                    $db->quoteName('t.last_post_time'),
+                    $db->quoteName('c.name', 'category_title'),
+                    $db->quoteName('c.alias', 'category_alias'),
+                    $db->quoteName('m.userid', 'last_post_userid'),
+                    $db->quoteName('m.name', 'last_post_name'),
+                ]
             )
-            ->innerJoin(
-                $db->quoteName('#__kunena_messages', 'm')
-                . ' ON m.id = t.last_post_messageid'
-            )
-            ->where($db->quoteName('t.published') . ' = 1')
-            ->where($db->quoteName('t.hold') . ' = 0')
-            ->order($db->quoteName('t.last_post_time') . ' DESC');
+                ->from($db->quoteName('#__kunena_topics', 't'))
+                ->innerJoin(
+                    $db->quoteName('#__kunena_categories', 'c')
+                    . ' ON c.id = t.category_id AND c.published = 1'
+                )
+                ->innerJoin(
+                    $db->quoteName('#__kunena_messages', 'm')
+                    . ' ON m.id = t.last_post_messageid'
+                )
+                ->where($db->quoteName('t.published') . ' = 1')
+                ->where($db->quoteName('t.hold') . ' = 0')
+                ->order($db->quoteName('t.last_post_time') . ' DESC');
 
-        $db->setQuery($query, 0, $limit);
-        $topics = $db->loadObjectList() ?: [];
+            $db->setQuery($query, 0, $limit);
+            $topics = $db->loadObjectList() ?: [];
 
-        foreach ($topics as &$topic) {
-            $topic->subject      = htmlspecialchars((string) $topic->subject, ENT_QUOTES, 'UTF-8');
-            $topic->topicLink    = Route::_(
-                'index.php?option=com_kunena&view=topic&catid=' . (int) $topic->category_id . '&id=' . (int) $topic->id
-            );
-            $topic->categoryLink = Route::_(
-                'index.php?option=com_kunena&view=category&catid=' . (int) $topic->category_id
-            );
+            foreach ($topics as &$topic) {
+                $topic->subject      = htmlspecialchars((string) $topic->subject, ENT_QUOTES, 'UTF-8');
+                $topic->topicLink    = Route::_(
+                    'index.php?option=com_kunena&view=topic&catid=' . (int) $topic->category_id . '&id=' . (int) $topic->id
+                );
+                $topic->categoryLink = Route::_(
+                    'index.php?option=com_kunena&view=category&catid=' . (int) $topic->category_id
+                );
+            }
+            unset($topic);
+
+            return $topics;
+        } catch (\Throwable $e) {
+            // Kunena not installed or tables missing.
+            return [];
         }
-        unset($topic);
-
-        return $topics;
     }
 
     /**
