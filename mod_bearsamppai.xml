@@ -2,7 +2,7 @@
 <extension type="module" client="site" method="upgrade">
 	<name>mod_bearsamppai</name>
 	<author>Bearsampp</author>
-	<creationDate>2026 September 27</creationDate>
+	<creationDate>2026 September 28</creationDate>
 	<copyright>Copyright (C) 2026 Bearsampp</copyright>
 	<license>GNU General Public License version 3; see LICENSE</license>
 	<authorEmail>support@bearsampp.com</authorEmail>
