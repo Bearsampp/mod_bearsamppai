@@ -29,8 +29,11 @@ use Joomla\Utilities\ArrayHelper;
  *   index.php?option=com_ajax&module=bearsamppai&method=ask&format=json&module_id=123
  *
  * Answers a visitor question using the Google Gemini API (OpenAI-compatible
- * endpoint, free tier supported) with knowledge gathered from the same content
- * sources rendered by the module (articles, FAQ and Kunena forum topics).
+ * endpoint, free tier supported) with knowledge gathered from the module's
+ * content sources: articles, FAQ and Kunena forum topics. The sources are the
+ * ones the module renders, but the `show_*` toggles are not honoured — a
+ * configured FAQ category and a reachable Kunena install are always included in
+ * the context that is sent to the API.
  *
  * @since  2.1.0
  */
