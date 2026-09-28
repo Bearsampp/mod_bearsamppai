@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Update version to 2026.09.27 [skip ci] ([2033345](https://github.com/Bearsampp/mod_bearsamppai/commit/2033345))
 * Pin joomla-packager to 2026.9.27.3 and force a 2026.09.27 rebuild ([25684ed](https://github.com/Bearsampp/mod_bearsamppai/commit/25684ed))
 * Update version to 2026.09.27 [skip ci] ([8cb9634](https://github.com/Bearsampp/mod_bearsamppai/commit/8cb9634))
+* Update version to 2026.09.27 [skip ci] ([861571f](https://github.com/Bearsampp/mod_bearsamppai/commit/861571f))
+* Pin joomla-packager to 2026.9.27.4 to fix the manifest creation date ([ef272fa](https://github.com/Bearsampp/mod_bearsamppai/commit/ef272fa))
 
 ### Removed
 
