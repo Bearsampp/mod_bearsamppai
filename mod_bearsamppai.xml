@@ -98,6 +98,14 @@
 				/>
 
 				<field
+					name="gemini_fallback_model"
+					type="text"
+					label="MOD_BEARSAMPPAI_FIELD_GEMINI_FALLBACK_MODEL_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_GEMINI_FALLBACK_MODEL_DESC"
+					default="gemini-2.5-flash-lite"
+				/>
+
+				<field
 					name="gemini_endpoint"
 					type="text"
 					label="MOD_BEARSAMPPAI_FIELD_GEMINI_ENDPOINT_LABEL"

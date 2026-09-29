@@ -65,6 +65,14 @@ class BearsamppaiHelper
 	private const DEFAULT_MODEL = 'gemini-3.8-flash';
 
 	/**
+	 * Default Gemini model used when the primary model returns HTTP 503.
+	 *
+	 * @var string
+	 * @since 2.3.0
+	 */
+	private const DEFAULT_FALLBACK_MODEL = 'gemini-2.5-flash-lite';
+
+	/**
 	 * Handle the com_ajax "ask" method.
 	 *
 	 * @return  array  JSON-ready result (success/answer/error).
@@ -97,9 +105,10 @@ class BearsamppaiHelper
 			return ['success' => false, 'error' => 'Empty message'];
 		}
 
-		$apiKey   = trim((string) $params->get('gemini_api_key', ''));
-		$model    = trim((string) $params->get('gemini_model', self::DEFAULT_MODEL));
-		$endpoint = trim((string) $params->get('gemini_endpoint', self::DEFAULT_ENDPOINT));
+		$apiKey        = trim((string) $params->get('gemini_api_key', ''));
+		$model         = trim((string) $params->get('gemini_model', self::DEFAULT_MODEL));
+		$fallbackModel = trim((string) $params->get('gemini_fallback_model', self::DEFAULT_FALLBACK_MODEL));
+		$endpoint      = trim((string) $params->get('gemini_endpoint', self::DEFAULT_ENDPOINT));
 
 		$missing = [];
 
@@ -176,7 +185,25 @@ class BearsamppaiHelper
 				$timeout = 30;
 			}
 
+			$fallbackAttempted = false;
 			$response = $http->post($endpoint, json_encode($payload), $headers, $timeout);
+
+			if ($response->code === 503 && $fallbackModel !== '' && $fallbackModel !== $model) {
+				$fallbackAttempted = true;
+				Log::addLogger(
+					['text_file' => 'mod_bearsamppai.php'],
+					Log::ALL,
+					['mod_bearsamppai']
+				);
+				Log::add(
+					'Gemini model ' . $model . ' returned HTTP 503; retrying with fallback model ' . $fallbackModel,
+					Log::WARNING,
+					'mod_bearsamppai'
+				);
+
+				$payload['model'] = $fallbackModel;
+				$response = $http->post($endpoint, json_encode($payload), $headers, $timeout);
+			}
 
 			if ($response->code < 200 || $response->code >= 300) {
 				Log::addLogger(
@@ -208,10 +235,14 @@ class BearsamppaiHelper
 					}
 				}
 
-				$errorMessage = 'Gemini API request failed (status ' . $response->code . ')';
+				if ($response->code === 503 && $fallbackAttempted) {
+					$errorMessage = 'The AI service is busy right now. Please try again shortly.';
+				} else {
+					$errorMessage = 'Gemini API request failed (status ' . $response->code . ')';
 
-				if ($detail !== '') {
-					$errorMessage .= ': ' . $detail;
+					if ($detail !== '') {
+						$errorMessage .= ': ' . $detail;
+					}
 				}
 
 				return [
