@@ -111,6 +111,20 @@
 	opacity: 0.9;
 }
 
+.mod-bearsamppai__chat--middle-right .mod-bearsamppai__chat-toggle,
+.mod-bearsamppai__chat--middle-left .mod-bearsamppai__chat-toggle {
+	flex-direction: column;
+	border-radius: 0.5rem;
+	padding: 0.8rem 0.65rem;
+}
+
+.mod-bearsamppai__chat--middle-right .mod-bearsamppai__chat-toggle-label,
+.mod-bearsamppai__chat--middle-left .mod-bearsamppai__chat-toggle-label {
+	max-width: none;
+	max-height: 60vh;
+	writing-mode: vertical-rl;
+}
+
 .mod-bearsamppai__chat-panel {
 	position: absolute;
 	display: flex;
@@ -146,27 +160,20 @@
 	max-height: calc(100vh - var(--mbai-y) - 4rem);
 }
 
-/* The side panels are offset from the launcher by the launcher's own width, so
-   the space available on that side is the viewport minus that width. Without
-   this the panel runs past the edge of a narrow screen, which gives the page a
-   horizontal scrollbar and shifts a position:fixed widget sideways. */
 .mod-bearsamppai__chat--middle-right .mod-bearsamppai__chat-panel,
 .mod-bearsamppai__chat--middle-left .mod-bearsamppai__chat-panel {
 	max-width: calc(100vw - var(--mbai-x) - 100% - 1.6rem);
+	max-height: calc(100vh - 2rem);
+	top: 50%;
+	transform: translateY(-50%);
 }
 
 .mod-bearsamppai__chat--middle-right .mod-bearsamppai__chat-panel {
 	right: calc(100% + 0.6rem);
-	top: 50%;
-	transform: translateY(-50%);
-	max-height: calc(100vh - 2rem);
 }
 
 .mod-bearsamppai__chat--middle-left .mod-bearsamppai__chat-panel {
 	left: calc(100% + 0.6rem);
-	top: 50%;
-	transform: translateY(-50%);
-	max-height: calc(100vh - 2rem);
 }
 
 .mod-bearsamppai__chat-header {
@@ -396,10 +403,6 @@
 		max-height: calc(100vh - 4.5rem);
 	}
 
-	/* A side panel cannot sit beside the launcher on a phone, so it becomes
-	   fixed to the viewport: same side as the launcher, starting at the module
-	   offset, and spanning to the opposite margin. Sizing it against the
-	   viewport instead of the launcher is what stops the horizontal overflow. */
 	.mod-bearsamppai__chat--middle-left .mod-bearsamppai__chat-panel {
 		position: fixed;
 		left: var(--mbai-x);
@@ -416,15 +419,14 @@
 		max-width: none;
 	}
 
-	/* Collapsed launcher on small screens: a long label turns the pill into a
-	   wide bar across the viewport, which is worst in the middle-left and
-	   middle-right positions where it sits at 50% height. Reduce it to a round
-	   icon button. The :not() also covers markup rendered before this option
-	   existed, so a missing attribute gets the same compact default.
+	/* Keep bottom launchers compact on phones; middle launchers retain their
+	   vertical label so they remain recognizable as side tabs. The :not()
+	   also covers markup rendered before this option existed, so a missing
+	   attribute gets the same compact default.
 
 	   The label text is clipped rather than removed, so the button keeps its
 	   accessible name; the heading is still shown in the panel header. */
-	.mod-bearsamppai__chat:not([data-mobile-label="1"]) .mod-bearsamppai__chat-toggle {
+	.mod-bearsamppai__chat:not(.mod-bearsamppai__chat--middle-left):not(.mod-bearsamppai__chat--middle-right):not([data-mobile-label="1"]) .mod-bearsamppai__chat-toggle {
 		width: 3rem;
 		height: 3rem;
 		padding: 0;
@@ -433,7 +435,7 @@
 		border-radius: 50%;
 	}
 
-	.mod-bearsamppai__chat:not([data-mobile-label="1"]) .mod-bearsamppai__chat-toggle-label {
+	.mod-bearsamppai__chat:not(.mod-bearsamppai__chat--middle-left):not(.mod-bearsamppai__chat--middle-right):not([data-mobile-label="1"]) .mod-bearsamppai__chat-toggle-label {
 		position: absolute;
 		width: 1px;
 		height: 1px;
@@ -445,9 +447,8 @@
 		border: 0;
 	}
 
-	/* A 0.9em dot is too small to read as an icon once the pill has become a
-	   3rem circle, so the bubble grows with it. */
-	.mod-bearsamppai__chat:not([data-mobile-label="1"]) .mod-bearsamppai__chat-toggle-icon {
+	/* The icon grows with the compact circular bottom launcher. */
+	.mod-bearsamppai__chat:not(.mod-bearsamppai__chat--middle-left):not(.mod-bearsamppai__chat--middle-right):not([data-mobile-label="1"]) .mod-bearsamppai__chat-toggle-icon {
 		width: 1.4rem;
 		height: 1.4rem;
 	}
