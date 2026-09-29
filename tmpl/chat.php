@@ -62,6 +62,11 @@ $height = max(300, min(1200, (int) $params->get('chat_height', 500)));
 $offsetX = max(0, min(200, (int) $params->get('chat_offset_x', 20)));
 $offsetY = max(0, min(200, (int) $params->get('chat_offset_y', 20)));
 
+// Keep the text label on the collapsed launcher at small widths. Defaults to No
+// so the button reduces to a round icon on phones, and the stylesheet treats a
+// missing attribute the same way.
+$mobileLabel = (int) $params->get('chat_mobile_label', 0) === 1;
+
 $theme = (string) $params->get('chat_theme', 'auto');
 
 if (!in_array($theme, ['auto', 'light', 'dark'], true)) {
@@ -87,8 +92,8 @@ $statusChecking  = Text::_('MOD_BEARSAMPPAI_CHAT_STATUS_CHECKING');
 	class="mod-bearsamppai__chat mod-bearsamppai__chat--<?php echo $position; ?>"
 	data-bearsamppai-chat
 	data-theme="<?php echo $theme; ?>"<?php echo $schemeAttr; ?>
+	data-mobile-label="<?php echo $mobileLabel ? '1' : '0'; ?>"
 	style="--mbai-x: <?php echo $offsetX; ?>px; --mbai-y: <?php echo $offsetY; ?>px; --mbai-w: <?php echo $width; ?>px; --mbai-h: <?php echo $height; ?>px;"
-	data-theme="<?php echo $theme; ?>"
 	data-module-id="<?php echo (int) $module->id; ?>"
 	data-endpoint="index.php?option=com_ajax&module=bearsamppai&method=ask&format=json">
 	<button
@@ -97,7 +102,7 @@ $statusChecking  = Text::_('MOD_BEARSAMPPAI_CHAT_STATUS_CHECKING');
 		aria-expanded="false"
 		aria-controls="mod-bearsamppai-chat-panel-<?php echo (int) $module->id; ?>"
 		data-bearsamppai-chat-toggle>
-		<span class="mod-bearsamppai__chat-toggle-icon" aria-hidden="true"></span>
+		<svg class="mod-bearsamppai__chat-toggle-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
 		<span class="mod-bearsamppai__chat-toggle-label"><?php echo htmlspecialchars($heading, ENT_QUOTES, 'UTF-8'); ?></span>
 	</button>
 

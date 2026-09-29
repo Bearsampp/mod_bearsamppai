@@ -31,6 +31,78 @@
 	</updateservers>
 	<config>
 		<fields name="params">
+			<fieldset name="content" label="MOD_BEARSAMPPAI_FIELDSET_CONTENT_LABEL" description="MOD_BEARSAMPPAI_FIELDSET_CONTENT_DESC">
+				<field
+					name="articles_category_id"
+					type="category"
+					extension="com_content"
+					multiple="true"
+					size="10"
+					label="MOD_BEARSAMPPAI_FIELD_ARTICLES_CATEGORIES_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_ARTICLES_CATEGORIES_DESC"
+					filter="uint"
+				/>
+
+				<field
+					name="articles_count"
+					type="number"
+					label="MOD_BEARSAMPPAI_FIELD_ARTICLES_COUNT_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_ARTICLES_COUNT_DESC"
+					default="5"
+					filter="integer"
+					min="1"
+					max="50"
+					validate="number"
+				/>
+
+				<field
+					name="faq_category_id"
+					type="category"
+					extension="com_content"
+					multiple="false"
+					label="MOD_BEARSAMPPAI_FIELD_FAQ_CATEGORY_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_FAQ_CATEGORY_DESC"
+					filter="uint"
+				/>
+
+				<field
+					name="faq_count"
+					type="number"
+					label="MOD_BEARSAMPPAI_FIELD_FAQ_COUNT_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_FAQ_COUNT_DESC"
+					default="10"
+					filter="integer"
+					min="1"
+					max="100"
+					validate="number"
+				/>
+
+				<field
+					name="show_forum"
+					type="radio"
+					label="MOD_BEARSAMPPAI_FIELD_SHOW_FORUM_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_SHOW_FORUM_DESC"
+					layout="joomla.form.field.radio.switcher"
+					default="0"
+					filter="integer"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+				<field
+					name="forum_count"
+					type="number"
+					label="MOD_BEARSAMPPAI_FIELD_FORUM_COUNT_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_FORUM_COUNT_DESC"
+					default="5"
+					filter="integer"
+					min="1"
+					max="50"
+					validate="number"
+				/>
+			</fieldset>
+
 			<fieldset name="ai" label="MOD_BEARSAMPPAI_FIELDSET_AI_LABEL">
 				<field
 					name="show_chat"
@@ -197,6 +269,18 @@
 					max="200"
 					validate="number"
 				/>
+
+				<field
+					name="chat_mobile_label"
+					type="list"
+					label="MOD_BEARSAMPPAI_FIELD_CHAT_MOBILE_LABEL_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CHAT_MOBILE_LABEL_DESC"
+					default="0"
+					filter="integer"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
 
 				<field
 					name="chat_theme"

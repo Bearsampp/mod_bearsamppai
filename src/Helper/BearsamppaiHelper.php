@@ -29,11 +29,16 @@ use Joomla\Utilities\ArrayHelper;
  *   index.php?option=com_ajax&module=bearsamppai&method=ask&format=json&module_id=123
  *
  * Answers a visitor question using the Google Gemini API (OpenAI-compatible
- * endpoint, free tier supported) with knowledge gathered from the module's
- * content sources: articles, FAQ and Kunena forum topics. The sources are the
- * ones the module renders, but the `show_*` toggles are not honoured — a
- * configured FAQ category and a reachable Kunena install are always included in
- * the context that is sent to the API.
+ * endpoint, free tier supported) with knowledge gathered from the site's
+ * published content: articles from the selected categories, FAQ articles read
+ * as question/answer pairs, and Kunena forum topics.
+ *
+ * The scope is the module's own configuration: `articles_category_id` (any of
+ * the selected categories, or every published article when none is selected),
+ * `faq_category_id` (included only when set) and `show_forum` (Kunena content
+ * is skipped unless this is switched on, so installing Kunena does not silently
+ * widen what the model can see). The `show_*` display toggles do not apply
+ * here — the chat is the only output, and it draws on every source enabled.
  *
  * @since  2.1.0
  */
@@ -100,7 +105,7 @@ class BearsamppaiHelper
 			$noData = "I'm sorry, I don't know how to answer that";
 		}
 
-		// Build the local knowledge base context from the same sources rendered by the module.
+		// Build the knowledge base context from the configured content sources.
 		$context = $this->getKnowledgeContext($params);
 
 		if ($context === '') {
@@ -119,6 +124,7 @@ class BearsamppaiHelper
 			. "4. Only provide links if they are mentioned in the <kb> content or if the user explicitly asks for page references." . "\n"
 			. "5. The website URL is: " . $siteUrl . "\n"
 			. "6. Format links as clickable Markdown: [Link Text](URL) only when necessary." . "\n"
+			. "7. Content is grouped by source. 'FAQ question' is a visitor question and the 'FAQ answer' that follows is the approved answer - match on meaning, not wording." . "\n"
 			. "\n"
 			. "Knowledge base context follows between <kb> tags." . "\n"
 			. "<kb>" . $context . '</kb>';
@@ -222,8 +228,9 @@ class BearsamppaiHelper
 	}
 
 	/**
-	 * Build a compact knowledge context string from the content sources rendered by the module:
-	 * selected articles (category/tags), FAQ articles and Kunena forum topics.
+	 * Build a compact knowledge context string from the configured content
+	 * sources: articles (optionally restricted to selected categories), FAQ
+	 * articles read as question/answer pairs, and Kunena forum topics.
 	 *
 	 * @param   Registry  $params  The module parameters.
 	 *
@@ -241,7 +248,7 @@ class BearsamppaiHelper
 			$maxTotal = 20000;
 		}
 
-		// Articles (same scope as the rendered module).
+		// Articles: the selected categories, or every published article when none are selected.
 		$categories = array_values(
 			array_filter(
 				ArrayHelper::toInteger((array) $params->get('articles_category_id', [])),
@@ -249,47 +256,72 @@ class BearsamppaiHelper
 			)
 		);
 
-		$tags  = array_values(array_filter(ArrayHelper::toInteger((array) $params->get('articles_tag_ids', []))));
 		$limit = max((int) $params->get('articles_count', 5), 1);
 		$limit = min($limit, 50);
 
-		$items = $this->loadArticles($params, $limit, $categories, $tags);
+		$items = $this->loadArticles($params, $limit, $categories);
 
 		foreach ($items as $item) {
-			$text = strip_tags((string) ($item->introtext ?? '') . "\n" . (string) ($item->fulltext ?? ''));
-			$text = preg_replace('/\s+/', ' ', $text);
+			$text = $this->plainText((string) ($item->introtext ?? '') . "\n" . (string) ($item->fulltext ?? ''));
 
 			$this->addContextPart($parts, $total, $maxTotal, 'Article: ' . (string) $item->title, $text);
 		}
 
-		// FAQ articles (same category as the rendered FAQ accordion).
+		// FAQ articles: the title is the question, the article text is the answer.
 		$faqCatid = (int) $params->get('faq_category_id', 0);
 
 		if ($faqCatid > 0) {
 			$faqLimit = max((int) $params->get('faq_count', 10), 1);
 			$faqLimit = min($faqLimit, 100);
 
-			$faqItems = $this->loadArticles($params, $faqLimit, [$faqCatid], [], 'ordering', 'ASC');
+			$faqItems = $this->loadArticles($params, $faqLimit, [$faqCatid], 'ordering', 'ASC');
 
 			foreach ($faqItems as $item) {
-				$text = strip_tags((string) ($item->introtext ?? '') . "\n" . (string) ($item->fulltext ?? ''));
-				$text = preg_replace('/\s+/', ' ', $text);
-				$this->addContextPart($parts, $total, $maxTotal, 'FAQ: ' . (string) $item->title, $text);
+				$question = $this->plainText((string) ($item->title ?? ''));
+				$answer   = $this->plainText((string) ($item->introtext ?? '') . "\n" . (string) ($item->fulltext ?? ''));
+
+				if ($question === '') {
+					continue;
+				}
+
+				$this->addContextPart(
+					$parts,
+					$total,
+					$maxTotal,
+					'FAQ question: ' . $question,
+					'FAQ answer: ' . $answer
+				);
 			}
 		}
 
-		// Kunena forum topics.
-		$forumTopics = $this->loadForumTopics($params);
+		// Kunena forum topics, excluded unless the site opts in.
+		if ((int) $params->get('show_forum', 0) === 1) {
+			foreach ($this->loadForumTopics($params) as $topic) {
+				$subject = trim((string) ($topic->subject ?? 'Forum post'));
+				$text    = $this->plainText((string) ($topic->message ?? ''));
 
-		foreach ($forumTopics as $topic) {
-			$subject = trim((string) ($topic->subject ?? 'Forum post'));
-			$text    = trim((string) ($topic->message ?? ''));
-			$text    = strip_tags($text);
-			$text    = preg_replace('/\s+/', ' ', $text);
-			$this->addContextPart($parts, $total, $maxTotal, 'Forum: ' . $subject, $text);
+				$this->addContextPart($parts, $total, $maxTotal, 'Forum: ' . $subject, $text);
+			}
 		}
 
 		return trim(implode("\n\n---\n\n", $parts));
+	}
+
+	/**
+	 * Reduce HTML to single-line plain text for the context prompt.
+	 *
+	 * @param   string  $html  Raw HTML or text.
+	 *
+	 * @return  string  Whitespace-collapsed plain text.
+	 *
+	 * @since   2.1.0
+	 */
+	private function plainText(string $html): string
+	{
+		$text = strip_tags($html);
+		$text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+		return trim((string) preg_replace('/\s+/u', ' ', $text));
 	}
 
 	/**
@@ -298,7 +330,6 @@ class BearsamppaiHelper
 	 * @param   Registry   $params       The module parameters.
 	 * @param   int        $limit        Maximum number of items.
 	 * @param   int[]      $categories   Category id filters (empty to ignore).
-	 * @param   int[]      $tags         Tag id filters (empty to ignore).
 	 * @param   string     $ordering     Column to order by (without alias prefix).
 	 * @param   string     $direction    Ordering direction.
 	 *
@@ -306,7 +337,7 @@ class BearsamppaiHelper
 	 *
 	 * @since   2.1.0
 	 */
-	private function getArticlesModel(Registry $params, int $limit, array $categories, array $tags, string $ordering = 'publish_up', string $direction = 'DESC')
+	private function getArticlesModel(Registry $params, int $limit, array $categories, string $ordering = 'publish_up', string $direction = 'DESC')
 	{
 		$app = Factory::getApplication();
 
@@ -337,12 +368,6 @@ class BearsamppaiHelper
 			$model->setState('filter.category_id', $categories);
 		}
 
-		if (count($tags) === 1) {
-			$model->setState('filter.tag', (int) $tags[0]);
-		} elseif (count($tags) > 1) {
-			$model->setState('filter.tag', $tags);
-		}
-
 		return $model;
 	}
 
@@ -352,7 +377,6 @@ class BearsamppaiHelper
 	 * @param   Registry  $params     The module parameters.
 	 * @param   int       $limit      Maximum number of items.
 	 * @param   int[]     $categories Category id filters (empty to ignore).
-	 * @param   int[]     $tags       Tag id filters (empty to ignore).
 	 * @param   string    $ordering   Column to order by.
 	 * @param   string    $direction  Ordering direction.
 	 *
@@ -360,10 +384,10 @@ class BearsamppaiHelper
 	 *
 	 * @since   2.1.0
 	 */
-	private function loadArticles(Registry $params, int $limit, array $categories, array $tags, string $ordering = 'publish_up', string $direction = 'DESC'): array
+	private function loadArticles(Registry $params, int $limit, array $categories, string $ordering = 'publish_up', string $direction = 'DESC'): array
 	{
 		try {
-			$model = $this->getArticlesModel($params, $limit, $categories, $tags, $ordering, $direction);
+			$model = $this->getArticlesModel($params, $limit, $categories, $ordering, $direction);
 
 			if ($model === null) {
 				return [];
