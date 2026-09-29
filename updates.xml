@@ -5,10 +5,10 @@
         <description>Bearsampp AI - Gemini-powered knowledge base chat for Joomla</description>
         <element>mod_bearsamppai</element>
         <type>module</type>
-        <version>2026.09.29.6</version>
+        <version>2026.09.29.7</version>
         <infourl title="Bearsampp AI">https://bearsampp.com</infourl>
         <downloads>
-            <downloadurl type="full" format="zip">https://github.com/Bearsampp/mod_bearsamppai/releases/download/2026.09.29.6/mod_bearsamppai_2026.09.29.6.zip</downloadurl>
+            <downloadurl type="full" format="zip">https://github.com/Bearsampp/mod_bearsamppai/releases/download/2026.09.29.7/mod_bearsamppai_2026.09.29.7.zip</downloadurl>
         </downloads>
         <tags>
             <tag>ai</tag>
