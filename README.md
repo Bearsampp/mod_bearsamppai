@@ -53,7 +53,7 @@ See [Choosing the knowledge base content](#choosing-the-knowledge-base-content) 
 | --- | --- |
 | Show AI chat widget | Enable the floating chat widget. |
 | Gemini API key | Your Google AI Studio (Generative Language) API key. |
-| Gemini model | Model to use, e.g. `gemini-2.5-flash`, `gemini-2.5-flash-lite`. |
+| Gemini model | Model to use, e.g. `gemini-3.8-flash` (default). |
 | Gemini endpoint | OpenAI-compatible chat endpoint (defaults to the Google Gemini API). |
 | Max response tokens | 64–4096, default 512. |
 | Temperature | 0–1, default 0.2 (low = factual answers). |

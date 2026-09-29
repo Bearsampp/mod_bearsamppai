@@ -94,7 +94,7 @@
 					type="text"
 					label="MOD_BEARSAMPPAI_FIELD_GEMINI_MODEL_LABEL"
 					description="MOD_BEARSAMPPAI_FIELD_GEMINI_MODEL_DESC"
-					default="gemini-2.5-flash"
+					default="gemini-3.8-flash"
 				/>
 
 				<field

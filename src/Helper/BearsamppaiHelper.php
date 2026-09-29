@@ -62,7 +62,7 @@ class BearsamppaiHelper
 	 * @var string
 	 * @since 2.1.0
 	 */
-	private const DEFAULT_MODEL = 'gemini-2.5-flash';
+	private const DEFAULT_MODEL = 'gemini-3.8-flash';
 
 	/**
 	 * Handle the com_ajax "ask" method.
