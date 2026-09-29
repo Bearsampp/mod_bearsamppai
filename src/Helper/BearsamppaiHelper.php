@@ -16,7 +16,6 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Http\HttpFactory;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Database\DatabaseInterface;
-use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
 use Joomla\Utilities\ArrayHelper;
 
@@ -286,11 +285,9 @@ class BearsamppaiHelper
 			$query = $db->getQuery(true)
 				->select($db->quoteName('params'))
 				->from($db->quoteName('#__modules'))
-				->where($db->quoteName('id') . ' = :id')
-				->where($db->quoteName('module') . ' = :module')
-				->where($db->quoteName('client_id') . ' = 0')
-				->bind(':id', $moduleId, ParameterType::INTEGER)
-				->bind(':module', 'mod_bearsamppai');
+				->where($db->quoteName('id') . ' = ' . (int) $moduleId)
+				->where($db->quoteName('module') . ' = ' . $db->quote('mod_bearsamppai'))
+				->where($db->quoteName('client_id') . ' = 0');
 
 			$db->setQuery($query);
 
