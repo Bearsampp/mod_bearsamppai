@@ -171,6 +171,8 @@ class BearsamppaiHelper
 			'temperature' => (float) $params->get('temperature', 0.2),
 		];
 
+		$fallbackAttempted = false;
+
 		try {
 			$http    = HttpFactory::getHttp();
 			$headers = [
@@ -185,22 +187,31 @@ class BearsamppaiHelper
 				$timeout = 30;
 			}
 
-			$fallbackAttempted = false;
-			$response = $http->post($endpoint, json_encode($payload), $headers, $timeout);
+			try {
+				$response = $http->post($endpoint, json_encode($payload), $headers, $timeout);
+			} catch (\Throwable $e) {
+				if (
+					!$this->isTimeoutException($e)
+					|| $fallbackModel === ''
+					|| $fallbackModel === $model
+				) {
+					throw $e;
+				}
 
-			if ($response->code === 503 && $fallbackModel !== '' && $fallbackModel !== $model) {
 				$fallbackAttempted = true;
-				Log::addLogger(
-					['text_file' => 'mod_bearsamppai.php'],
-					Log::ALL,
-					['mod_bearsamppai']
-				);
-				Log::add(
-					'Gemini model ' . $model . ' returned HTTP 503; retrying with fallback model ' . $fallbackModel,
-					Log::WARNING,
-					'mod_bearsamppai'
-				);
+				$this->logFallbackAttempt($model, $fallbackModel, 'request timeout');
+				$payload['model'] = $fallbackModel;
+				$response = $http->post($endpoint, json_encode($payload), $headers, $timeout);
+			}
 
+			if (
+				$response->code === 503
+				&& !$fallbackAttempted
+				&& $fallbackModel !== ''
+				&& $fallbackModel !== $model
+			) {
+				$fallbackAttempted = true;
+				$this->logFallbackAttempt($model, $fallbackModel, 'HTTP 503');
 				$payload['model'] = $fallbackModel;
 				$response = $http->post($endpoint, json_encode($payload), $headers, $timeout);
 			}
@@ -263,8 +274,55 @@ class BearsamppaiHelper
 				'answer'  => trim((string) $data['choices'][0]['message']['content']),
 			];
 		} catch (\Throwable $e) {
+			if ($fallbackAttempted && $this->isTimeoutException($e)) {
+				return [
+					'success' => false,
+					'error'   => 'The AI service is taking too long to respond. Please try again shortly.',
+				];
+			}
+
 			return ['success' => false, 'error' => $e->getMessage()];
 		}
+	}
+
+	/**
+	 * Determine whether an HTTP client exception indicates that the request timed out.
+	 *
+	 * @param   \Throwable  $exception  The caught exception.
+	 *
+	 * @return  bool
+	 *
+	 * @since   2.3.0
+	 */
+	private function isTimeoutException(\Throwable $exception): bool
+	{
+		return stripos($exception->getMessage(), 'timed out') !== false
+			|| stripos($exception->getMessage(), 'timeout') !== false;
+	}
+
+	/**
+	 * Record a fallback model attempt.
+	 *
+	 * @param   string  $primaryModel   The model that failed.
+	 * @param   string  $fallbackModel  The model being tried.
+	 * @param   string  $reason         Why fallback was triggered.
+	 *
+	 * @return  void
+	 *
+	 * @since   2.3.0
+	 */
+	private function logFallbackAttempt(string $primaryModel, string $fallbackModel, string $reason): void
+	{
+		Log::addLogger(
+			['text_file' => 'mod_bearsamppai.php'],
+			Log::ALL,
+			['mod_bearsamppai']
+		);
+		Log::add(
+			'Gemini model ' . $primaryModel . ' returned ' . $reason . '; retrying with fallback model ' . $fallbackModel,
+			Log::WARNING,
+			'mod_bearsamppai'
+		);
 	}
 
 	/**
