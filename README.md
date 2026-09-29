@@ -40,11 +40,10 @@ A Joomla 5.4/6 site module that adds a floating **Gemini-powered AI chat widget*
 | Parameter | Description |
 | --- | --- |
 | Article categories | Multi-select. Categories whose published articles feed the AI. Any selected category counts; empty means all published articles site-wide. |
-| Number of articles | 1–50, default 5. How many of the most recent published articles to include. |
 | FAQ category | The category holding your FAQ articles. Empty = no FAQ content. |
-| Number of FAQ articles | 1–100, default 10. |
-| Include Kunena forum topics | Default **No**. Set to Yes to add recent published topics to the context. |
-| Number of forum topics | 1–50, default 5. |
+| Include Kunena forum topics | Default **No**. Set to Yes to add published topics to the context. |
+
+There is no per-source item count: everything published in a selected scope is a candidate and the knowledge context limit is the only cap.
 
 See [Choosing the knowledge base content](#choosing-the-knowledge-base-content) for how these combine.
 
@@ -102,14 +101,11 @@ The **Knowledge Base Content** tab controls what the AI may answer from. It is a
 
 | Setting | Default | Effect |
 | --- | --- | --- |
-| `articles_category_id` | *(empty)* | The categories whose published articles become context. Multi-select — an article is used when it belongs to **any** of the chosen categories. Leave it empty to use the most recent published articles site-wide. |
-| `articles_count` | `5` | How many of the most recent published articles to include, newest first. Shares the character budget, so a lower value leaves more room for FAQ and forum content. |
+| `articles_category_id` | *(empty)* | The categories whose published articles become context. Multi-select — an article is used when it belongs to **any** of the chosen categories. Leave it empty to use every published article site-wide. |
 | `faq_category_id` | *(empty)* | The category holding your FAQ articles. Included only when set. |
-| `faq_count` | `10` | How many FAQ articles to include, in the category's own ordering. |
-| `show_forum` | `0` (No) | Recent published Kunena topics are added to the context **only when this is switched on**. It defaults to No so that installing Kunena does not silently widen what the AI can answer. |
-| `forum_count` | `5` | How many of the most recently active Kunena topics to include, using the first post as the topic text. |
+| `show_forum` | `0` (No) | Published Kunena topics are added to the context **only when this is switched on**. It defaults to No so that installing Kunena does not silently widen what the AI can answer. |
 
-Articles, FAQ and forum content are added in that order until `chat_context_limit` is reached. Anything that does not fit is skipped whole rather than cut off mid-sentence, so a very long article can push out later sources — raise the limit or lower `articles_count` if the FAQ or forum content is being squeezed out.
+There is no separate item count per source. Everything published in a selected scope is a candidate, and `chat_context_limit` is the only cap — so the newest articles fill the budget first and the remainder is simply left out. Articles are added first, then FAQ, then forum. Content that does not fit is skipped whole rather than cut off mid-sentence, and a source is always given its turn even if an earlier one was too large, so a short FAQ entry can still reach the context. If FAQ answers are being squeezed out, narrow the article categories or raise `chat_context_limit`.
 
 **FAQ articles are read as question and answer pairs:** the article title is the question and the article text is the answer. The model is told to match them on meaning rather than wording, so a visitor can ask a question in their own words and still reach the right FAQ entry.
 

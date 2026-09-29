@@ -37,7 +37,9 @@ use Joomla\Utilities\ArrayHelper;
  * the selected categories, or every published article when none is selected),
  * `faq_category_id` (included only when set) and `show_forum` (Kunena content
  * is skipped unless this is switched on, so installing Kunena does not silently
- * widen what the model can see). The `show_*` display toggles do not apply
+ * widen what the model can see). Every item in a selected scope is a candidate;
+ * `chat_context_limit` is the only cap, so the newest articles fill the budget
+ * first and the remainder is left out. The `show_*` display toggles do not apply
  * here — the chat is the only output, and it draws on every source enabled.
  *
  * @since  2.1.0
@@ -248,7 +250,10 @@ class BearsamppaiHelper
 			$maxTotal = 20000;
 		}
 
-		// Articles: the selected categories, or every published article when none are selected.
+		// Articles: the selected categories, or every published article when none
+		// are selected. There is no separate item count - the context limit below
+		// is what decides how much is actually sent, so the newest items win and
+		// the rest are simply left out.
 		$categories = array_values(
 			array_filter(
 				ArrayHelper::toInteger((array) $params->get('articles_category_id', [])),
@@ -256,27 +261,20 @@ class BearsamppaiHelper
 			)
 		);
 
-		$limit = max((int) $params->get('articles_count', 5), 1);
-		$limit = min($limit, 50);
-
-		$items = $this->loadArticles($params, $limit, $categories);
-
-		foreach ($items as $item) {
+		foreach ($this->loadArticles($params, 0, $categories) as $item) {
 			$text = $this->plainText((string) ($item->introtext ?? '') . "\n" . (string) ($item->fulltext ?? ''));
 
-			$this->addContextPart($parts, $total, $maxTotal, 'Article: ' . (string) $item->title, $text);
+			if (!$this->addContextPart($parts, $total, $maxTotal, 'Article: ' . (string) $item->title, $text)) {
+				// Articles are newest first, so the rest are no more likely to fit.
+				break;
+			}
 		}
 
 		// FAQ articles: the title is the question, the article text is the answer.
 		$faqCatid = (int) $params->get('faq_category_id', 0);
 
 		if ($faqCatid > 0) {
-			$faqLimit = max((int) $params->get('faq_count', 10), 1);
-			$faqLimit = min($faqLimit, 100);
-
-			$faqItems = $this->loadArticles($params, $faqLimit, [$faqCatid], 'ordering', 'ASC');
-
-			foreach ($faqItems as $item) {
+			foreach ($this->loadArticles($params, 0, [$faqCatid], 'ordering', 'ASC') as $item) {
 				$question = $this->plainText((string) ($item->title ?? ''));
 				$answer   = $this->plainText((string) ($item->introtext ?? '') . "\n" . (string) ($item->fulltext ?? ''));
 
@@ -284,23 +282,31 @@ class BearsamppaiHelper
 					continue;
 				}
 
-				$this->addContextPart(
-					$parts,
-					$total,
-					$maxTotal,
-					'FAQ question: ' . $question,
-					'FAQ answer: ' . $answer
-				);
+				if (
+					!$this->addContextPart(
+						$parts,
+						$total,
+						$maxTotal,
+						'FAQ question: ' . $question,
+						'FAQ answer: ' . $answer
+					)
+				) {
+					break;
+				}
 			}
 		}
 
-		// Kunena forum topics, excluded unless the site opts in.
+		// Kunena forum topics, excluded unless the site opts in. A source is always
+		// given its turn even when an earlier one was too large to fit, so a
+		// short FAQ entry or topic can still make it into a full context.
 		if ((int) $params->get('show_forum', 0) === 1) {
 			foreach ($this->loadForumTopics($params) as $topic) {
 				$subject = trim((string) ($topic->subject ?? 'Forum post'));
 				$text    = $this->plainText((string) ($topic->message ?? ''));
 
-				$this->addContextPart($parts, $total, $maxTotal, 'Forum: ' . $subject, $text);
+				if (!$this->addContextPart($parts, $total, $maxTotal, 'Forum: ' . $subject, $text)) {
+					break;
+				}
 			}
 		}
 
@@ -328,7 +334,7 @@ class BearsamppaiHelper
 	 * Create a site ArticlesModel configured for module context queries.
 	 *
 	 * @param   Registry   $params       The module parameters.
-	 * @param   int        $limit        Maximum number of items.
+	 * @param   int        $limit        Maximum number of items, 0 for no limit.
 	 * @param   int[]      $categories   Category id filters (empty to ignore).
 	 * @param   string     $ordering     Column to order by (without alias prefix).
 	 * @param   string     $direction    Ordering direction.
@@ -375,7 +381,7 @@ class BearsamppaiHelper
 	 * Load content articles for the given scope.
 	 *
 	 * @param   Registry  $params     The module parameters.
-	 * @param   int       $limit      Maximum number of items.
+	 * @param   int       $limit      Maximum number of items, 0 for no limit.
 	 * @param   int[]     $categories Category id filters (empty to ignore).
 	 * @param   string    $ordering   Column to order by.
 	 * @param   string    $direction  Ordering direction.
@@ -410,9 +416,6 @@ class BearsamppaiHelper
 	 */
 	private function loadForumTopics(Registry $params): array
 	{
-		$limit = max((int) $params->get('forum_count', 5), 1);
-		$limit = min($limit, 50);
-
 		try {
 			$db    = Factory::getContainer()->get('DatabaseDriver');
 			$query = $db->getQuery(true);
@@ -436,7 +439,7 @@ class BearsamppaiHelper
 				->where($db->quoteName('t.hold') . ' = 0')
 				->order($db->quoteName('t.last_post_time') . ' DESC');
 
-			$db->setQuery($query, 0, $limit);
+			$db->setQuery($query);
 
 			return (array) $db->loadObjectList();
 		} catch (\Throwable $e) {
@@ -454,21 +457,23 @@ class BearsamppaiHelper
 	 * @param   string  $label     Source label (e.g. "Article: ...").
 	 * @param   string  $text      Plain text content.
 	 *
-	 * @return  void
+	 * @return  boolean  True when the part was added, false when it did not fit.
 	 *
 	 * @since   2.1.0
 	 */
-	private function addContextPart(array &$parts, int &$total, int $maxTotal, string $label, string $text): void
+	private function addContextPart(array &$parts, int &$total, int $maxTotal, string $label, string $text): bool
 	{
 		$text  = trim(str_replace("\n", ' ', $text));
 		$part  = $label . "\n" . $text;
 		$len   = mb_strlen($part);
 
 		if ($total + $len > $maxTotal) {
-			return;
+			return false;
 		}
 
 		$parts[] = $part;
 		$total  += $len;
+
+		return true;
 	}
 }

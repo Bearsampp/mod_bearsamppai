@@ -146,6 +146,15 @@
 	max-height: calc(100vh - var(--mbai-y) - 4rem);
 }
 
+/* The side panels are offset from the launcher by the launcher's own width, so
+   the space available on that side is the viewport minus that width. Without
+   this the panel runs past the edge of a narrow screen, which gives the page a
+   horizontal scrollbar and shifts a position:fixed widget sideways. */
+.mod-bearsamppai__chat--middle-right .mod-bearsamppai__chat-panel,
+.mod-bearsamppai__chat--middle-left .mod-bearsamppai__chat-panel {
+	max-width: calc(100vw - var(--mbai-x) - 100% - 1.6rem);
+}
+
 .mod-bearsamppai__chat--middle-right .mod-bearsamppai__chat-panel {
 	right: calc(100% + 0.6rem);
 	top: 50%;
@@ -385,6 +394,26 @@
 	.mod-bearsamppai__chat--bottom-right .mod-bearsamppai__chat-panel,
 	.mod-bearsamppai__chat--bottom-left .mod-bearsamppai__chat-panel {
 		max-height: calc(100vh - 4.5rem);
+	}
+
+	/* A side panel cannot sit beside the launcher on a phone, so it becomes
+	   fixed to the viewport: same side as the launcher, starting at the module
+	   offset, and spanning to the opposite margin. Sizing it against the
+	   viewport instead of the launcher is what stops the horizontal overflow. */
+	.mod-bearsamppai__chat--middle-left .mod-bearsamppai__chat-panel {
+		position: fixed;
+		left: var(--mbai-x);
+		right: 0.5rem;
+		width: auto;
+		max-width: none;
+	}
+
+	.mod-bearsamppai__chat--middle-right .mod-bearsamppai__chat-panel {
+		position: fixed;
+		right: var(--mbai-x);
+		left: 0.5rem;
+		width: auto;
+		max-width: none;
 	}
 
 	/* Collapsed launcher on small screens: a long label turns the pill into a
