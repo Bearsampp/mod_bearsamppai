@@ -22,7 +22,7 @@
 	--mbai-shadow: rgba(0, 0, 0, 0.25);
 
 	position: fixed;
-	z-index: 1000;
+	z-index: 99999;
 	font-size: 0.95rem;
 	line-height: 1.45;
 }
@@ -119,6 +119,13 @@
 	background: var(--mbai-bg);
 	color: var(--mbai-fg);
 	box-shadow: 0 10px 32px var(--mbai-shadow);
+}
+
+/* The display declaration above is author-level, so it beats the user agent's
+   [hidden] rule. Without this the panel would stay on screen permanently and the
+   close button and aria-expanded state would have no effect. */
+.mod-bearsamppai__chat-panel[hidden] {
+	display: none;
 }
 
 .mod-bearsamppai__chat--bottom-right .mod-bearsamppai__chat-panel {

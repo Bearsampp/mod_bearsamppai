@@ -12,6 +12,7 @@
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Uri\Uri;
 
 /** @var object $module The current module instance. */
 /** @var \Joomla\CMS\Application\SiteApplication $app The site application. */
@@ -21,11 +22,25 @@ if ((int) $params->get('show_chat', 0) !== 1) {
 	return;
 }
 
-// Register chat assets only when the chat is enabled.
+// Register chat assets only when the chat is enabled. The files ship inside the
+// module folder, so they have to be addressed through it. Pointing at the shared
+// /media tree resolves to a file that does not exist and the WebAssetManager then
+// silently drops both assets, leaving the chat unstyled and inert.
+$moduleBase = rtrim(Uri::root(), '/') . '/modules/' . $module->module;
+$assetOpts  = [];
+$manifest   = JPATH_ROOT . '/modules/' . $module->module . '/' . $module->module . '.xml';
+
+if (is_readable($manifest)) {
+	$manifestXml = simplexml_load_file($manifest);
+
+	if ($manifestXml !== false && isset($manifestXml->version)) {
+		$assetOpts['version'] = (string) $manifestXml->version;
+	}
+}
+
 $wa = $app->getDocument()->getWebAssetManager();
-$wa->registerStyle('mod_bearsamppai.chat', 'media/mod_bearsamppai/css/chat.css', [], ['version' => '2026.09.27']);
-$wa->registerScript('mod_bearsamppai.chat', 'media/mod_bearsamppai/js/chat.js', [], ['defer' => true]);
-$wa->useStyle('mod_bearsamppai.chat')->useScript('mod_bearsamppai.chat');
+$wa->registerAndUseStyle('mod_bearsamppai.chat', $moduleBase . '/media/css/chat.css', [], $assetOpts);
+$wa->registerAndUseScript('mod_bearsamppai.chat', $moduleBase . '/media/js/chat.js', [], ['defer' => true]);
 
 $heading     = trim((string) $params->get('chat_heading', 'Ask Bearsampp'));
 $placeholder = trim((string) $params->get('chat_placeholder', 'Ask a question about Bearsampp...'));
@@ -53,6 +68,11 @@ if (!in_array($theme, ['auto', 'light', 'dark'], true)) {
 	$theme = 'auto';
 }
 
+// An explicit light/dark choice is emitted up front so the correct palette
+// applies before (or without) the deferred script. 'auto' is left to the
+// script, which resolves it from the prefers-color-scheme media query.
+$schemeAttr = $theme === 'auto' ? '' : ' data-theme-scheme="' . $theme . '"';
+
 $showCopy = (int) $params->get('chat_show_copy', 1) === 1;
 
 $greeting = trim((string) $params->get('chat_greeting', ''));
@@ -65,6 +85,8 @@ $statusChecking  = Text::_('MOD_BEARSAMPPAI_CHAT_STATUS_CHECKING');
 ?>
 <div
 	class="mod-bearsamppai__chat mod-bearsamppai__chat--<?php echo $position; ?>"
+	data-bearsamppai-chat
+	data-theme="<?php echo $theme; ?>"<?php echo $schemeAttr; ?>
 	style="--mbai-x: <?php echo $offsetX; ?>px; --mbai-y: <?php echo $offsetY; ?>px; --mbai-w: <?php echo $width; ?>px; --mbai-h: <?php echo $height; ?>px;"
 	data-theme="<?php echo $theme; ?>"
 	data-module-id="<?php echo (int) $module->id; ?>"
