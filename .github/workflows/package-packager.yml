@@ -34,4 +34,13 @@ jobs:
           license-file: 'LICENSE'
           update-joomla-server: 'true'
           commit-changes: 'true'
+          upload-artifact: 'false'
           github-token: ${{ secrets.GH_PAT }}
+
+      - name: Upload extension package files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
+        with:
+          name: mod_bearsamppai_${{ steps.package.outputs.version }}
+          path: ${{ steps.package.outputs.package-path }}
+          retention-days: 90
+          if-no-files-found: warn
