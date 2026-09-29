@@ -187,6 +187,12 @@ class BearsamppaiHelper
 				$timeout = 30;
 			}
 
+			$fallbackTimeout = (int) $params->get('fallback_timeout', 10);
+
+			if ($fallbackTimeout < 1) {
+				$fallbackTimeout = 10;
+			}
+
 			try {
 				$response = $http->post($endpoint, json_encode($payload), $headers, $timeout);
 			} catch (\Throwable $e) {
@@ -201,7 +207,7 @@ class BearsamppaiHelper
 				$fallbackAttempted = true;
 				$this->logFallbackAttempt($model, $fallbackModel, 'request timeout');
 				$payload['model'] = $fallbackModel;
-				$response = $http->post($endpoint, json_encode($payload), $headers, $timeout);
+				$response = $http->post($endpoint, json_encode($payload), $headers, $fallbackTimeout);
 			}
 
 			if (
@@ -213,7 +219,7 @@ class BearsamppaiHelper
 				$fallbackAttempted = true;
 				$this->logFallbackAttempt($model, $fallbackModel, 'HTTP 503');
 				$payload['model'] = $fallbackModel;
-				$response = $http->post($endpoint, json_encode($payload), $headers, $timeout);
+				$response = $http->post($endpoint, json_encode($payload), $headers, $fallbackTimeout);
 			}
 
 			if ($response->code < 200 || $response->code >= 300) {

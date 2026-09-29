@@ -54,11 +54,12 @@ See [Choosing the knowledge base content](#choosing-the-knowledge-base-content) 
 | Show AI chat widget | Enable the floating chat widget. |
 | Gemini API key | Your Google AI Studio (Generative Language) API key. |
 | Gemini model | Model to use, e.g. `gemini-3.8-flash` (default). |
-| Gemini fallback model | Tried once if the primary returns HTTP 503; defaults to `gemini-2.5-flash-lite`. Leave blank to disable. |
+| Gemini fallback model | Tried once if the primary times out or returns HTTP 503; defaults to `gemini-2.5-flash-lite`. Leave blank to disable. |
 | Gemini endpoint | OpenAI-compatible chat endpoint (defaults to the Google Gemini API). |
 | Max response tokens | 64–4096, default 512. |
 | Temperature | 0–1, default 0.2 (low = factual answers). |
 | Request timeout (seconds) | 5–120, default 30. |
+| Fallback timeout (seconds) | 1–120, default 10; applies only to the fallback-model request, after a primary timeout or HTTP 503. |
 | Knowledge context limit (characters) | Character budget for the content sent to the AI, 1000–50000, default 20000. |
 | Chat button label | Text shown on the floating button and panel header. |
 | Input placeholder | Placeholder text of the message input. |
@@ -74,6 +75,8 @@ See [Choosing the knowledge base content](#choosing-the-knowledge-base-content) 
 | Welcome message | Optional first assistant message shown when the chat opens (empty = no greeting). |
 | Show connection status | Adds a small dot to the panel header that checks the chat endpoint every interval. |
 | Status check interval (seconds) | 10–600, default 30. |
+
+The **Gemini fallback model** is a separate API model, distinct from the **Fallback answer** shown when no knowledge-base content is available. It is tried once after the primary request times out or returns HTTP 503. The fallback request uses its own timeout, so a slow primary plus fallback can take up to both timeouts combined.
 
 ### Advanced tab
 

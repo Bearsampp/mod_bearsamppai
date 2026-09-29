@@ -148,6 +148,18 @@
 				/>
 
 				<field
+					name="fallback_timeout"
+					type="number"
+					label="MOD_BEARSAMPPAI_FIELD_FALLBACK_TIMEOUT_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_FALLBACK_TIMEOUT_DESC"
+					default="10"
+					filter="integer"
+					min="1"
+					max="120"
+					validate="number"
+				/>
+
+				<field
 					name="chat_context_limit"
 					type="number"
 					label="MOD_BEARSAMPPAI_FIELD_CONTEXT_LIMIT_LABEL"
