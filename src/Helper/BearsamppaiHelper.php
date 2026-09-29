@@ -15,6 +15,8 @@ use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Http\HttpFactory;
 use Joomla\CMS\Uri\Uri;
+use Joomla\Database\DatabaseInterface;
+use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
 use Joomla\Utilities\ArrayHelper;
 
@@ -79,13 +81,15 @@ class BearsamppaiHelper
 			return ['success' => false, 'error' => 'Missing module_id'];
 		}
 
-		$module = \Joomla\CMS\Helper\ModuleHelper::getModuleById($moduleId);
-
-		if (!$module || !isset($module->params)) {
-			return ['success' => false, 'error' => 'Module not found'];
+		try {
+			$params = $this->getModuleParams($moduleId);
+		} catch (\RuntimeException $e) {
+			return ['success' => false, 'error' => $e->getMessage()];
 		}
 
-		$params = new Registry($module->params);
+		if ($params === null) {
+			return ['success' => false, 'error' => 'Module not found or not a mod_bearsamppai site module'];
+		}
 
 		$message = trim((string) $input->getString('message', ''));
 
@@ -97,8 +101,25 @@ class BearsamppaiHelper
 		$model    = trim((string) $params->get('gemini_model', self::DEFAULT_MODEL));
 		$endpoint = trim((string) $params->get('gemini_endpoint', self::DEFAULT_ENDPOINT));
 
-		if ($apiKey === '' || $model === '') {
-			return ['success' => false, 'error' => 'Missing Gemini API key or model'];
+		$missing = [];
+
+		if ($apiKey === '') {
+			$missing[] = 'API key';
+		}
+
+		if ($model === '') {
+			$missing[] = 'model';
+		}
+
+		if ($missing !== []) {
+			// Name the missing field and the instance it was read from, so a
+			// genuinely unset key is distinguishable from a bad module id.
+			return [
+				'success' => false,
+				'error'   => 'Missing Gemini ' . implode(' and ', $missing)
+					. ' for module ' . $moduleId
+					. '. Save the AI Chat (Gemini) tab on that module instance.',
+			];
 		}
 
 		$noData = trim((string) $params->get('chat_no_data_message', "I'm sorry, I don't know how to answer that"));
@@ -220,13 +241,72 @@ class BearsamppaiHelper
 			return ['success' => false, 'error' => 'Missing module_id'];
 		}
 
-		$module = \Joomla\CMS\Helper\ModuleHelper::getModuleById($moduleId);
+		try {
+			$params = $this->getModuleParams($moduleId);
+		} catch (\RuntimeException $e) {
+			return ['success' => false, 'error' => $e->getMessage()];
+		}
 
-		if (!$module || !isset($module->params)) {
-			return ['success' => false, 'error' => 'Module not found'];
+		if ($params === null) {
+			return ['success' => false, 'error' => 'Module not found or not a mod_bearsamppai site module'];
 		}
 
 		return ['success' => true, 'answer' => 'ok'];
+	}
+
+	/**
+	 * Read a mod_bearsamppai module's saved parameters by module id.
+	 *
+	 * This deliberately queries #__modules instead of using
+	 * Joomla\CMS\Helper\ModuleHelper::getModuleById(). That core method builds
+	 * its list through getModuleList(), which filters on the current menu item
+	 * (`mm.menuid = :itemId OR mm.menuid <= 0`). A com_ajax request is not a
+	 * menu page, so Itemid is 0 and the only rows that survive are those shown
+	 * on every menu. A module assigned to a single menu item is therefore
+	 * missing from the list, getModuleById() returns a dummy module with empty
+	 * params, and every configured value - the Gemini key and model included -
+	 * reads back as blank. The direct lookup below is menu-independent.
+	 *
+	 * @param   int  $moduleId  The module id from the request.
+	 *
+	 * @return  Registry|null  The parameters, or null when no such site module exists.
+	 *
+	 * @throws  \RuntimeException  When the database lookup itself fails.
+	 *
+	 * @since   2.2.1
+	 */
+	private function getModuleParams(int $moduleId): ?Registry
+	{
+		if ($moduleId < 1) {
+			return null;
+		}
+
+		try {
+			$db    = Factory::getContainer()->get(DatabaseInterface::class);
+			$query = $db->getQuery(true)
+				->select($db->quoteName('params'))
+				->from($db->quoteName('#__modules'))
+				->where($db->quoteName('id') . ' = :id')
+				->where($db->quoteName('module') . ' = :module')
+				->where($db->quoteName('client_id') . ' = 0')
+				->bind(':id', $moduleId, ParameterType::INTEGER)
+				->bind(':module', 'mod_bearsamppai');
+
+			$db->setQuery($query);
+
+			$raw = $db->loadResult();
+		} catch (\Throwable $e) {
+			// Deliberately not swallowed: a broken lookup must not be reported
+			// as a missing module, which is what made the original bug hard to
+			// diagnose. The caller turns this into a distinct error message.
+			throw new \RuntimeException('Module settings lookup failed: ' . $e->getMessage(), 0, $e);
+		}
+
+		if ($raw === null || $raw === false || $raw === '') {
+			return null;
+		}
+
+		return new Registry($raw);
 	}
 
 	/**
