@@ -14,6 +14,7 @@ namespace Bearsampp\Module\BearsamppAI\Site\Helper;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Http\HttpFactory;
+use Joomla\CMS\Log\Log;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Registry\Registry;
@@ -178,6 +179,20 @@ class BearsamppaiHelper
 			$response = $http->post($endpoint, json_encode($payload), $headers, $timeout);
 
 			if ($response->code < 200 || $response->code >= 300) {
+				Log::addLogger(
+					['text_file' => 'mod_bearsamppai.php'],
+					Log::ALL,
+					['mod_bearsamppai']
+				);
+
+				$logBody = preg_replace('/[\x00-\x1F\x7F]/', ' ', (string) $response->body);
+				$logBody = substr((string) $logBody, 0, 4000);
+				Log::add(
+					'Gemini API request failed (HTTP ' . $response->code . '); response body: ' . $logBody,
+					Log::ERROR,
+					'mod_bearsamppai'
+				);
+
 				$detail = '';
 				$body   = json_decode((string) $response->body, true);
 
