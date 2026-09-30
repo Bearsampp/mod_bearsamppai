@@ -1,10 +1,10 @@
 # Bearsampp AI (mod_bearsamppai)
 
-A Joomla 5.4/6 site module that adds a floating **Gemini-powered AI chat widget** to your site. Visitor questions are answered by the Google Gemini API, grounded strictly in your own content — the article categories you select, your FAQ articles (title as the question, text as the answer) and, when you use Kunena, your latest forum topics.
+A Joomla 5.4/6 site module that adds a floating **AI chat widget** to your site. Visitor questions are answered through an OpenAI-compatible AI API, grounded strictly in your own content — the article categories you select, your FAQ articles (title as the question, text as the answer) and, when you use Kunena, your latest forum topics.
 
 ## Features
 
-- **Grounded AI chat (Gemini)** — a floating chat widget backed by the Google Gemini API (OpenAI-compatible endpoint, free tier supported). Answers are grounded strictly in your site content.
+- **Grounded AI chat** — a floating chat widget backed by any OpenAI-compatible chat completions API. The default is OpenCode Zen, so a free OpenCode key is enough; point the endpoint, key and model at any other service if you prefer. Answers are grounded strictly in your site content.
 - **Prompt-grounded answers** — the AI receives the articles, FAQ entries and forum topics you select as context and is instructed to answer only from that content, falling back to a configurable message when no knowledge matches. Content is used as grounding context only; the module does not render content blocks of its own.
 - **You choose the knowledge base** — multi-select the article categories to draw from, point the FAQ field at your FAQ category, and opt in to Kunena forum topics with a single switch. Installing Kunena never changes what the AI can see.
 - **Customizable chat UI**:
@@ -25,7 +25,7 @@ A Joomla 5.4/6 site module that adds a floating **Gemini-powered AI chat widget*
 - Joomla 5.4 or newer (Joomla 6 ready)
 - PHP 8.1 or newer
 - Kunena 6.x (optional, only when you switch on *Include Kunena forum topics*)
-- A Google AI Studio API key (optional, only for the chat widget — free tier works, get one at https://aistudio.google.com/app/apikey)
+- An AI service API key (optional, only for the chat widget). With the default endpoint this is an OpenCode Zen key; any OpenAI-compatible service works if you also set the endpoint and model.
 
 ## Installation
 
@@ -47,15 +47,15 @@ There is no per-source item count: everything published in a selected scope is a
 
 See [Choosing the knowledge base content](#choosing-the-knowledge-base-content) for how these combine.
 
-### AI Chat (Gemini) tab
+### AI Chat tab
 
 | Parameter | Description |
 | --- | --- |
 | Show AI chat widget | Enable the floating chat widget. |
-| Gemini API key | Your Google AI Studio (Generative Language) API key. |
-| Gemini model | Model to use, e.g. `gemini-3.8-flash` (default). |
-| Gemini fallback model | Tried once if the primary times out or returns HTTP 503; defaults to `gemini-2.5-flash-lite`. Leave blank to disable. |
-| Gemini endpoint | OpenAI-compatible chat endpoint (defaults to the Google Gemini API). |
+| AI API key | API key for the AI service. With the default endpoint this is an OpenCode Zen key. Read on the server only; never sent to the browser. |
+| AI model | Model to use, e.g. `big-pickle` (default). |
+| Fallback model | Tried once if the primary request times out, is rate limited (HTTP 429) or returns a server error (HTTP 5xx); defaults to `deepseek-v4-flash-free`. Leave blank to disable. |
+| AI endpoint | OpenAI-compatible chat completions endpoint (defaults to OpenCode Zen). |
 | Max response tokens | 64–4096, default 512. |
 | Temperature | 0–1, default 0.2 (low = factual answers). |
 | Request timeout (seconds) | 5–120, default 30. |
@@ -76,7 +76,7 @@ See [Choosing the knowledge base content](#choosing-the-knowledge-base-content) 
 | Show connection status | Adds a small dot to the panel header that checks the chat endpoint every interval. |
 | Status check interval (seconds) | 10–600, default 30. |
 
-The **Gemini fallback model** is a separate API model, distinct from the **Fallback answer** shown when no knowledge-base content is available. It is tried once after the primary request times out or returns HTTP 503. The fallback request uses its own timeout, so a slow primary plus fallback can take up to both timeouts combined.
+The **Fallback model** is a separate API model, distinct from the **Fallback answer** shown when no knowledge-base content is available. It is tried once after the primary request times out, is rate limited (HTTP 429) or returns a server error (HTTP 5xx). The fallback request uses its own timeout, so a slow primary plus fallback can take up to both timeouts combined.
 
 ### Advanced tab
 
@@ -94,7 +94,7 @@ with `module_id` and `message`. The server-side helper (`src/Helper/BearsamppaiH
 
 1. Loads the content you configured: published articles from the selected categories, FAQ articles from the FAQ category (title read as the question, text as the answer) and recent published Kunena topics when Kunena is installed and forum content is enabled, stripping them to plain text for use as context.
 2. Assembles a compact context string, walking each source in order until the configured character budget is reached.
-3. Sends a `system` prompt plus the visitor question to the configured Gemini endpoint over the OpenAI-compatible API using a Bearer token.
+3. Sends a `system` prompt plus the visitor question to the configured AI endpoint over the OpenAI-compatible API using a Bearer token.
 4. Returns the answer (or the fallback message when no knowledge is available) as JSON consumed by the widget.
 
 The system prompt instructs the model to answer **only** from the supplied knowledge base context and not to rely on prior knowledge, web browsing or guesswork.
@@ -201,7 +201,7 @@ mod_bearsamppai/
 │   ├── Dispatcher/Dispatcher.php
 │   └── Helper/
 │       ├── ModuleHelper.php         # Content queries (articles, FAQ, forum)
-│       └── BearsamppaiHelper.php    # Gemini chat / knowledge base logic
+│       └── BearsamppaiHelper.php    # AI chat / knowledge base logic
 ├── tmpl/
 │   ├── default.php                  # Wrapper layout, delegates to chat.php
 │   └── chat.php                     # Chat widget markup + asset registration

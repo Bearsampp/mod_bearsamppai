@@ -2,7 +2,7 @@
 <updates>
     <update>
         <name>mod_bearsamppai</name>
-        <description>Bearsampp AI - Gemini-powered knowledge base chat for Joomla</description>
+        <description>Bearsampp AI - knowledge base chat widget for Joomla</description>
         <element>mod_bearsamppai</element>
         <type>module</type>
         <version>2026.09.29.8</version>
@@ -13,7 +13,7 @@
         <tags>
             <tag>ai</tag>
             <tag>chat</tag>
-            <tag>gemini</tag>
+            <tag>opencode</tag>
             <tag>knowledgebase</tag>
         </tags>
     </update>

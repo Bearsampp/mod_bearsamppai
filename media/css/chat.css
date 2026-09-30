@@ -1,4 +1,4 @@
-/** Bearsampp AI module - Gemini chat widget styles. */
+/** Bearsampp AI module - floating AI chat widget styles. */
 
 .mod-bearsamppai__chat {
 	--mbai-primary: #4078c0;
@@ -123,6 +123,7 @@
 	max-width: none;
 	max-height: 60vh;
 	writing-mode: vertical-rl;
+	text-orientation: mixed;
 }
 
 .mod-bearsamppai__chat-panel {

@@ -1,5 +1,5 @@
 /**
- * Bearsampp AI module - Gemini chat widget.
+ * Bearsampp AI module - floating AI chat widget.
  *
  * @author      Bearsampp
  * @copyright   (C) 2026 Bearsampp

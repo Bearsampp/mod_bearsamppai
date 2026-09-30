@@ -30,10 +30,15 @@ use Joomla\Utilities\ArrayHelper;
  * Route (via com_ajax):
  *   index.php?option=com_ajax&module=bearsamppai&method=ask&format=json&module_id=123
  *
- * Answers a visitor question using the Google Gemini API (OpenAI-compatible
- * endpoint, free tier supported) with knowledge gathered from the site's
- * published content: articles from the selected categories, FAQ articles read
- * as question/answer pairs, and Kunena forum topics.
+ * Answers a visitor question through an OpenAI-compatible chat completions
+ * endpoint, with knowledge gathered from the site's published content:
+ * articles from the selected categories, FAQ articles read as
+ * question/answer pairs, and Kunena forum topics.
+ *
+ * The default provider is OpenCode Zen (https://opencode.ai/zen/v1) running
+ * `big-pickle`. Because the endpoint, key and model are all configurable, the
+ * module is not tied to that provider: any OpenAI-compatible chat completions
+ * service can be used by changing the four settings in the AI Chat tab.
  *
  * The scope is the module's own configuration: `articles_category_id` (any of
  * the selected categories, or every published article when none is selected),
@@ -49,28 +54,29 @@ use Joomla\Utilities\ArrayHelper;
 class BearsamppaiHelper
 {
 	/**
-	 * Default Gemini OpenAI-compatible endpoint.
+	 * Default OpenAI-compatible endpoint (OpenCode Zen).
 	 *
 	 * @var string
 	 * @since 2.1.0
 	 */
-	private const DEFAULT_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+	private const DEFAULT_ENDPOINT = 'https://opencode.ai/zen/v1/chat/completions';
 
 	/**
-	 * Default Gemini model name.
+	 * Default model name.
 	 *
 	 * @var string
 	 * @since 2.1.0
 	 */
-	private const DEFAULT_MODEL = 'gemini-3.8-flash';
+	private const DEFAULT_MODEL = 'big-pickle';
 
 	/**
-	 * Default Gemini model used when the primary model returns HTTP 503.
+	 * Default model tried when the primary model is rate limited, times out or
+	 * returns a server error.
 	 *
 	 * @var string
 	 * @since 2.3.0
 	 */
-	private const DEFAULT_FALLBACK_MODEL = 'gemini-2.5-flash-lite';
+	private const DEFAULT_FALLBACK_MODEL = 'deepseek-v4-flash-free';
 
 	/**
 	 * Handle the com_ajax "ask" method.
@@ -105,10 +111,10 @@ class BearsamppaiHelper
 			return ['success' => false, 'error' => 'Empty message'];
 		}
 
-		$apiKey        = trim((string) $params->get('gemini_api_key', ''));
-		$model         = trim((string) $params->get('gemini_model', self::DEFAULT_MODEL));
-		$fallbackModel = trim((string) $params->get('gemini_fallback_model', self::DEFAULT_FALLBACK_MODEL));
-		$endpoint      = trim((string) $params->get('gemini_endpoint', self::DEFAULT_ENDPOINT));
+		$apiKey        = trim((string) $params->get('ai_api_key', ''));
+		$model         = trim((string) $params->get('ai_model', self::DEFAULT_MODEL));
+		$fallbackModel = trim((string) $params->get('ai_fallback_model', self::DEFAULT_FALLBACK_MODEL));
+		$endpoint      = trim((string) $params->get('ai_endpoint', self::DEFAULT_ENDPOINT));
 
 		$missing = [];
 
@@ -125,9 +131,9 @@ class BearsamppaiHelper
 			// genuinely unset key is distinguishable from a bad module id.
 			return [
 				'success' => false,
-				'error'   => 'Missing Gemini ' . implode(' and ', $missing)
+				'error'   => 'Missing ' . implode(' and ', $missing)
 					. ' for module ' . $moduleId
-					. '. Save the AI Chat (Gemini) tab on that module instance.',
+					. '. Save the AI Chat tab on that module instance.',
 			];
 		}
 
@@ -210,14 +216,22 @@ class BearsamppaiHelper
 				$response = $http->post($endpoint, json_encode($payload), $headers, $fallbackTimeout);
 			}
 
+			// Retry once with the fallback model on anything that looks like a
+			// transient provider problem: a timeout, a rate limit (429) or any
+			// 5xx. Restricting this to 503 left the most common free-tier
+			// failure - being rate limited - with no retry at all. A 4xx other
+			// than 429 is a real problem with the request itself (bad key, bad
+			// model, malformed payload) and retrying would only add latency.
+			$retryable = $response->code === 429 || ($response->code >= 500 && $response->code < 600);
+
 			if (
-				$response->code === 503
+				$retryable
 				&& !$fallbackAttempted
 				&& $fallbackModel !== ''
 				&& $fallbackModel !== $model
 			) {
 				$fallbackAttempted = true;
-				$this->logFallbackAttempt($model, $fallbackModel, 'HTTP 503');
+				$this->logFallbackAttempt($model, $fallbackModel, 'HTTP ' . $response->code);
 				$payload['model'] = $fallbackModel;
 				$response = $http->post($endpoint, json_encode($payload), $headers, $fallbackTimeout);
 			}
@@ -232,7 +246,7 @@ class BearsamppaiHelper
 				$logBody = preg_replace('/[\x00-\x1F\x7F]/', ' ', (string) $response->body);
 				$logBody = substr((string) $logBody, 0, 4000);
 				Log::add(
-					'Gemini API request failed (HTTP ' . $response->code . '); response body: ' . $logBody,
+					'AI API request failed (HTTP ' . $response->code . '); response body: ' . $logBody,
 					Log::ERROR,
 					'mod_bearsamppai'
 				);
@@ -252,10 +266,10 @@ class BearsamppaiHelper
 					}
 				}
 
-				if ($response->code === 503 && $fallbackAttempted) {
+				if ($fallbackAttempted) {
 					$errorMessage = 'The AI service is busy right now. Please try again shortly.';
 				} else {
-					$errorMessage = 'Gemini API request failed (status ' . $response->code . ')';
+					$errorMessage = 'AI API request failed (status ' . $response->code . ')';
 
 					if ($detail !== '') {
 						$errorMessage .= ': ' . $detail;
@@ -272,7 +286,7 @@ class BearsamppaiHelper
 			$data = json_decode((string) $response->body, true);
 
 			if (!is_array($data) || empty($data['choices'][0]['message']['content'])) {
-				return ['success' => false, 'error' => 'Unexpected response from Gemini API'];
+				return ['success' => false, 'error' => 'Unexpected response from the AI API'];
 			}
 
 			return [
@@ -325,7 +339,7 @@ class BearsamppaiHelper
 			['mod_bearsamppai']
 		);
 		Log::add(
-			'Gemini model ' . $primaryModel . ' returned ' . $reason . '; retrying with fallback model ' . $fallbackModel,
+			'AI model ' . $primaryModel . ' returned ' . $reason . '; retrying with fallback model ' . $fallbackModel,
 			Log::WARNING,
 			'mod_bearsamppai'
 		);
@@ -373,7 +387,7 @@ class BearsamppaiHelper
 	 * menu page, so Itemid is 0 and the only rows that survive are those shown
 	 * on every menu. A module assigned to a single menu item is therefore
 	 * missing from the list, getModuleById() returns a dummy module with empty
-	 * params, and every configured value - the Gemini key and model included -
+	 * params, and every configured value - the API key and model included -
 	 * reads back as blank. The direct lookup below is menu-independent.
 	 *
 	 * @param   int  $moduleId  The module id from the request.
