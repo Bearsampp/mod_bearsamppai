@@ -94,7 +94,7 @@
 					type="text"
 					label="MOD_BEARSAMPPAI_FIELD_AI_MODEL_LABEL"
 					description="MOD_BEARSAMPPAI_FIELD_AI_MODEL_DESC"
-					default="big-pickle"
+					default="qwen/qwen3.8-27b:free"
 				/>
 
 				<field
@@ -102,7 +102,7 @@
 					type="text"
 					label="MOD_BEARSAMPPAI_FIELD_AI_FALLBACK_MODEL_LABEL"
 					description="MOD_BEARSAMPPAI_FIELD_AI_FALLBACK_MODEL_DESC"
-					default="space-bunny-free"
+					default="google/gemma-4-31b-it:free"
 				/>
 
 				<field
@@ -110,7 +110,7 @@
 					type="text"
 					label="MOD_BEARSAMPPAI_FIELD_AI_ENDPOINT_LABEL"
 					description="MOD_BEARSAMPPAI_FIELD_AI_ENDPOINT_DESC"
-					default="https://opencode.ai/zen/v1/chat/completions"
+					default="https://openrouter.ai/api/v1/chat/completions"
 				/>
 
 				<field

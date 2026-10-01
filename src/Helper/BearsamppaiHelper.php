@@ -35,10 +35,10 @@ use Joomla\Utilities\ArrayHelper;
  * articles from the selected categories, FAQ articles read as
  * question/answer pairs, and Kunena forum topics.
  *
- * The default provider is OpenCode Zen (https://opencode.ai/zen/v1) running
- * `big-pickle`. Because the endpoint, key and model are all configurable, the
- * module is not tied to that provider: any OpenAI-compatible chat completions
- * service can be used by changing the four settings in the AI Chat tab.
+	 * The default provider is OpenRouter (https://openrouter.ai/api/v1) running a
+	 * free model variant. Because the endpoint, key and model are all configurable,
+	 * the module is not tied to that provider: any OpenAI-compatible chat completions
+	 * service can be used by changing the four settings in the AI Chat tab.
  *
  * The scope is the module's own configuration: `articles_category_id` (any of
  * the selected categories, or every published article when none is selected),
@@ -54,12 +54,12 @@ use Joomla\Utilities\ArrayHelper;
 class BearsamppaiHelper
 {
 	/**
-	 * Default OpenAI-compatible endpoint (OpenCode Zen).
+	 * Default OpenAI-compatible endpoint (OpenRouter).
 	 *
 	 * @var string
 	 * @since 2.1.0
 	 */
-	private const DEFAULT_ENDPOINT = 'https://opencode.ai/zen/v1/chat/completions';
+	private const DEFAULT_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 
 	/**
 	 * Default model name.
@@ -67,7 +67,7 @@ class BearsamppaiHelper
 	 * @var string
 	 * @since 2.1.0
 	 */
-	private const DEFAULT_MODEL = 'big-pickle';
+	private const DEFAULT_MODEL = 'qwen/qwen3.8-27b:free';
 
 	/**
 	 * Default model tried when the primary model is rate limited, times out or
@@ -76,7 +76,7 @@ class BearsamppaiHelper
 	 * @var string
 	 * @since 2.3.0
 	 */
-	private const DEFAULT_FALLBACK_MODEL = 'space-bunny-free';
+	private const DEFAULT_FALLBACK_MODEL = 'google/gemma-4-31b-it:free';
 
 	/**
 	 * Handle the com_ajax "ask" method.
