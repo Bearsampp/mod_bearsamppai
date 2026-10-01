@@ -732,6 +732,7 @@ class BearsamppaiHelper
 	private function getContextSignature(Registry $params, int $maxTotal): string
 	{
 		$fingerprint = $this->getContentFingerprint(
+			ArrayHelper::toInteger((array) $params->get('articles_category_id', [])),
 			(int) $params->get('faq_category_id', 0),
 			(int) $params->get('show_forum', 0) === 1
 		);
@@ -750,14 +751,15 @@ class BearsamppaiHelper
 	/**
 	 * Fingerprint the article and forum content in scope.
 	 *
-	 * @param   int   $faqCatid   The FAQ category id, 0 for none.
-	 * @param   bool  $showForum  Whether forum topics are in scope.
+	 * @param   int[]  $articleCats  The selected article categories, empty for all.
+	 * @param   int    $faqCatid     The FAQ category id, 0 for none.
+	 * @param   bool   $showForum    Whether forum topics are in scope.
 	 *
 	 * @return  string
 	 *
 	 * @since   2.4.0
 	 */
-	private function getContentFingerprint(int $faqCatid, bool $showForum): string
+	private function getContentFingerprint(array $articleCats, int $faqCatid, bool $showForum): string
 	{
 		$stamp = [];
 
@@ -778,9 +780,28 @@ class BearsamppaiHelper
 					->where($db->quoteName('a.state') . ' = 1')
 					->where($db->quoteName('a.catid') . ' > 0');
 
+				// The fingerprint has to cover every category the context is built
+				// from. Restricting it to the FAQ category meant edits to the module
+				// articles left the fingerprint untouched, so the cache kept serving
+				// a context that predated them.
+				$inScope = $articleCats;
+
 				if ($faqCatid > 0) {
+					$inScope[] = $faqCatid;
+				}
+
+				$inScope = array_values(
+					array_filter(
+						ArrayHelper::toInteger($inScope),
+						static fn ($id) => $id > 0
+					)
+				);
+
+				// An empty selection means every published article, matching what
+				// loadArticles() does, so the fingerprint covers all of them.
+				if ($inScope !== []) {
 					$query->where(
-						$db->quoteName('a.catid') . ' = ' . (int) $faqCatid
+						$db->quoteName('a.catid') . ' IN (' . implode(',', $inScope) . ')'
 					);
 				}
 
