@@ -156,10 +156,7 @@ class BearsamppaiHelper
 		$context = $this->getKnowledgeContext($params);
 
 		if ($context === '') {
-			$this->logNotice(
-				'KB query: asked="' . $this->truncateForLog($message, 200) . '"'
-				. ' - context is empty, returning the no-data message without calling the AI'
-			);
+			$this->logNotice('KB empty context: no-data sent without calling the AI');
 
 			return ['success' => true, 'answer' => $noData, 'kb' => false];
 		}
@@ -303,15 +300,14 @@ class BearsamppaiHelper
 				return ['success' => false, 'error' => 'Unexpected response from the AI API'];
 			}
 
-			$answer = trim((string) $data['choices'][0]['message']['content']);
+		$answer = trim((string) $data['choices'][0]['message']['content']);
 
-			$this->logNotice(
-				'KB answer: model=' . $model
-				. ' fallbackUsed=' . ($fallbackAttempted ? 'yes' : 'no')
-				. ' asked="' . $this->truncateForLog($message, 200) . '"'
-				. ' answered="' . $this->truncateForLog($answer, 300) . '"'
-				. ' matchedNoData=' . ($answer === $noData ? 'yes' : 'no')
-			);
+		$this->logNotice(
+			'KB answer: chars=' . mb_strlen($context)
+			. ' model=' . $model
+			. ' fallback=' . ($fallbackAttempted ? 'yes' : 'no')
+			. ' noData=' . ($answer === $noData ? 'yes' : 'no')
+		);
 
 			return [
 				'success' => true,
@@ -559,19 +555,12 @@ class BearsamppaiHelper
 
 		$context = trim(implode(self::CONTEXT_SEPARATOR, $parts));
 
-		$this->logKnowledgeContext(
-			$context,
-			$parts,
-			[
-				'budget'      => $maxTotal,
-				'articleSeen' => $articleSeen,
-				'articleUsed' => $articleUsed,
-				'faqCategory' => $faqCatid,
-				'faqSeen'     => $faqSeen,
-				'faqUsed'     => $faqUsed,
-				'forumSeen'   => $forumSeen,
-				'forumUsed'   => $forumUsed,
-			]
+		$this->logNotice(
+			'KB context: chars=' . mb_strlen($context) . '/' . $maxTotal
+			. ' parts=' . count($parts)
+			. ' faq=' . $faqUsed . '/' . $faqSeen
+			. ' articles=' . $articleUsed . '/' . $articleSeen
+			. ' forum=' . $forumUsed . '/' . $forumSeen
 		);
 
 		return $context;
@@ -778,54 +767,4 @@ class BearsamppaiHelper
 		}
 	}
 
-	/**
-	 * Shorten a value for inclusion in a log line.
-	 *
-	 * @param   string  $value    The value to shorten.
-	 * @param   int     $max      The maximum length to keep.
-	 *
-	 * @return  string
-	 *
-	 * @since   2.4.0
-	 */
-	private function truncateForLog(string $value, int $max): string
-	{
-		$value = preg_replace('/[\x00-\x1F\x7F]/', ' ', $value);
-		$value = trim((string) preg_replace('/\s+/', ' ', (string) $value));
-
-		return mb_strimwidth($value, 0, $max, '...');
-	}
-
-	/**
-	 * Record what knowledge context was actually assembled, so that a missing or
-	 * truncated answer can be diagnosed from the log rather than guessed at. Each
-	 * source reports how many items were seen against how many actually fitted, so
-	 * a source starved by the character budget is distinguishable from a source
-	 * that returned nothing at all.
-	 *
-	 * @param   string    $context  The assembled context.
-	 * @param   string[]  $parts    The individual context parts.
-	 * @param   array     $stats    Source counts and the character budget.
-	 *
-	 * @return  void
-	 *
-	 * @since   2.4.0
-	 */
-	private function logKnowledgeContext(string $context, array $parts, array $stats): void
-	{
-		$labels = [];
-
-		foreach ($parts as $part) {
-			$labels[] = $this->truncateForLog(explode("\n", (string) $part, 2)[0], 80);
-		}
-
-		$this->logNotice(
-			'KB context: chars=' . mb_strlen($context) . '/' . $stats['budget']
-			. ' parts=' . count($parts)
-			. ' articles=' . $stats['articleUsed'] . '/' . $stats['articleSeen']
-			. ' faq=' . $stats['faqUsed'] . '/' . $stats['faqSeen'] . ' (category ' . $stats['faqCategory'] . ')'
-			. ' forum=' . $stats['forumUsed'] . '/' . $stats['forumSeen']
-			. ' | ' . ($labels === [] ? '(no content)' : implode(' | ', $labels))
-		);
-	}
 }
