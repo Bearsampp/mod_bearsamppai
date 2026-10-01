@@ -11,6 +11,7 @@
 
 namespace Bearsampp\Module\BearsamppAI\Site\Helper;
 
+use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Http\HttpFactory;
@@ -470,8 +471,22 @@ class BearsamppaiHelper
 		$total = 0;
 		$maxTotal = (int) $params->get('chat_context_limit', 20000);
 
-		if ($maxTotal < 1000) {
+		if ($maxTotal < 1000 || $maxTotal > 200000) {
 			$maxTotal = 20000;
+		}
+
+		// The assembled context only changes when the selected content or the
+		// parameters change, so reuse the last result until then. The signature
+		// covers both, which means edited or new content invalidates it on its own.
+		$signature = $this->getContextSignature($params, $maxTotal);
+		$cache     = $this->getContextCache();
+		$cacheKey  = 'mod_bearsamppai.context.' . $signature;
+		$cached    = $cache === null ? false : $cache->get($cacheKey);
+
+		if (is_string($cached) && $cached !== '') {
+			$this->logNotice('KB context: cache hit chars=' . mb_strlen($cached));
+
+			return $cached;
 		}
 
 		// FAQ first. FAQ entries are short, targeted, and the content an admin most
@@ -563,7 +578,136 @@ class BearsamppaiHelper
 			. ' forum=' . $forumUsed . '/' . $forumSeen
 		);
 
+		if ($cache !== null) {
+			$cache->store($context, $cacheKey);
+		}
+
 		return $context;
+	}
+
+	/**
+	 * Build the cache signature for the knowledge context.
+	 *
+	 * Combines the parameters that affect what is loaded with a fingerprint of the
+	 * content itself: the highest modification time and the row count of the
+	 * articles and forum topics in scope. Publishing, editing or deleting content
+	 * changes one or both, so the cached context is rebuilt without any explicit
+	 * invalidation.
+	 *
+	 * @param   Registry  $params    The module parameters.
+	 * @param   int       $maxTotal  The character budget in force.
+	 *
+	 * @return  string
+	 *
+	 * @since   2.4.0
+	 */
+	private function getContextSignature(Registry $params, int $maxTotal): string
+	{
+		$fingerprint = $this->getContentFingerprint(
+			(int) $params->get('faq_category_id', 0),
+			(int) $params->get('show_forum', 0) === 1
+		);
+
+		$parts = [
+			'limit'    => $maxTotal,
+			'cats'     => ArrayHelper::toInteger((array) $params->get('articles_category_id', [])),
+			'faq'      => (int) $params->get('faq_category_id', 0),
+			'forum'    => (int) $params->get('show_forum', 0),
+			'content'  => $fingerprint,
+		];
+
+		return md5(json_encode($parts));
+	}
+
+	/**
+	 * Fingerprint the article and forum content in scope.
+	 *
+	 * @param   int   $faqCatid   The FAQ category id, 0 for none.
+	 * @param   bool  $showForum  Whether forum topics are in scope.
+	 *
+	 * @return  string
+	 *
+	 * @since   2.4.0
+	 */
+	private function getContentFingerprint(int $faqCatid, bool $showForum): string
+	{
+		$stamp = [];
+
+		try {
+			$app = Factory::getApplication();
+
+			if ($app instanceof \Joomla\CMS\Application\SiteApplication) {
+				$db = Factory::getContainer()->get('DatabaseDriver');
+
+				$query = $db->getQuery(true)
+					->select(
+						[
+							$db->quoteName('MAX(a.modified)'),
+							$db->quoteName('COUNT(a.id)'),
+						]
+					)
+					->from($db->quoteName('#__content', 'a'))
+					->where($db->quoteName('a.state') . ' = 1')
+					->where($db->quoteName('a.catid') . ' > 0');
+
+				if ($faqCatid > 0) {
+					$query->where(
+						$db->quoteName('a.catid') . ' = ' . (int) $faqCatid
+					);
+				}
+
+				$db->setQuery($query);
+				$row = $db->loadObject();
+
+				if (is_object($row)) {
+					$stamp['articles'] = (string) ($row->MAX ?? $row->{'MAX(a.modified)'} ?? '') . ':' . (string) ($row->COUNT ?? $row->{'COUNT(a.id)'} ?? '0');
+				}
+			}
+
+			if ($showForum) {
+				$db    = Factory::getContainer()->get('DatabaseDriver');
+				$query = $db->getQuery(true)
+					->select(
+						[
+							$db->quoteName('MAX(t.last_post_time)'),
+							$db->quoteName('COUNT(t.id)'),
+						]
+					)
+					->from($db->quoteName('#__kunena_topics', 't'))
+					->where($db->quoteName('t.published') . ' = 1');
+
+				$db->setQuery($query);
+				$row = $db->loadObject();
+
+				if (is_object($row)) {
+					$stamp['forum'] = (string) ($row->MAX ?? $row->{'MAX(t.last_post_time)'} ?? '') . ':' . (string) ($row->COUNT ?? $row->{'COUNT(t.id)'} ?? '0');
+				}
+			}
+		} catch (\Throwable $e) {
+			// A missing table or column just means an empty fingerprint.
+		}
+
+		return json_encode($stamp);
+	}
+
+	/**
+	 * Get the cache used to store the assembled knowledge context.
+	 *
+	 * @return  ?\Joomla\CMS\Cache\CacheController  Null when unavailable.
+	 *
+	 * @since   2.4.0
+	 */
+	private function getContextCache(): ?\Joomla\CMS\Cache\CacheController
+	{
+		try {
+			$cache = Factory::getContainer()->get(CacheControllerFactoryInterface::class);
+
+			return $cache->createCacheController('callback', ['defaultgroup' => 'mod_bearsamppai']);
+		} catch (\Throwable $e) {
+			// Caching is an optimisation, never a requirement.
+		}
+
+		return null;
 	}
 
 	/**

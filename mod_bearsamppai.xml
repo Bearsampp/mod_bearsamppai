@@ -167,7 +167,7 @@
 					default="20000"
 					filter="integer"
 					min="1000"
-					max="50000"
+					max="200000"
 					validate="number"
 				/>
 
