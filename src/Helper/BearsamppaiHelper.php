@@ -147,6 +147,11 @@ class BearsamppaiHelper
 		$context = $this->getKnowledgeContext($params);
 
 		if ($context === '') {
+			$this->logNotice(
+				'KB query: asked="' . $this->truncateForLog($message, 200) . '"'
+				. ' - context is empty, returning the no-data message without calling the AI'
+			);
+
 			return ['success' => true, 'answer' => $noData, 'kb' => false];
 		}
 
@@ -289,9 +294,19 @@ class BearsamppaiHelper
 				return ['success' => false, 'error' => 'Unexpected response from the AI API'];
 			}
 
+			$answer = trim((string) $data['choices'][0]['message']['content']);
+
+			$this->logNotice(
+				'KB answer: model=' . $model
+				. ' fallbackUsed=' . ($fallbackAttempted ? 'yes' : 'no')
+				. ' asked="' . $this->truncateForLog($message, 200) . '"'
+				. ' answered="' . $this->truncateForLog($answer, 300) . '"'
+				. ' matchedNoData=' . ($answer === $noData ? 'yes' : 'no')
+			);
+
 			return [
 				'success' => true,
-				'answer'  => trim((string) $data['choices'][0]['message']['content']),
+				'answer'  => $answer,
 			];
 		} catch (\Throwable $e) {
 			if ($fallbackAttempted && $this->isTimeoutException($e)) {
@@ -462,20 +477,29 @@ class BearsamppaiHelper
 			)
 		);
 
+		$articleSeen = 0;
+		$articleUsed = 0;
+
 		foreach ($this->loadArticles($params, 0, $categories) as $item) {
+			$articleSeen++;
 			$text = $this->plainText((string) ($item->introtext ?? '') . "\n" . (string) ($item->fulltext ?? ''));
 
 			if (!$this->addContextPart($parts, $total, $maxTotal, 'Article: ' . (string) $item->title, $text)) {
 				// Articles are newest first, so the rest are no more likely to fit.
 				break;
 			}
+
+			$articleUsed++;
 		}
 
 		// FAQ articles: the title is the question, the article text is the answer.
 		$faqCatid = (int) $params->get('faq_category_id', 0);
+		$faqSeen  = 0;
+		$faqUsed  = 0;
 
 		if ($faqCatid > 0) {
 			foreach ($this->loadArticles($params, 0, [$faqCatid], 'ordering', 'ASC') as $item) {
+				$faqSeen++;
 				$question = $this->plainText((string) ($item->title ?? ''));
 				$answer   = $this->plainText((string) ($item->introtext ?? '') . "\n" . (string) ($item->fulltext ?? ''));
 
@@ -494,24 +518,49 @@ class BearsamppaiHelper
 				) {
 					break;
 				}
+
+				$faqUsed++;
 			}
 		}
 
-		// Kunena forum topics, excluded unless the site opts in. A source is always
-		// given its turn even when an earlier one was too large to fit, so a
-		// short FAQ entry or topic can still make it into a full context.
+		// Kunena forum topics, excluded unless the site opts in. Note that a later
+		// source only gets a turn when an earlier one left budget: once articles
+		// have filled the limit, the FAQ and forum blocks are skipped entirely.
+		$forumSeen = 0;
+		$forumUsed = 0;
+
 		if ((int) $params->get('show_forum', 0) === 1) {
 			foreach ($this->loadForumTopics($params) as $topic) {
+				$forumSeen++;
 				$subject = trim((string) ($topic->subject ?? 'Forum post'));
 				$text    = $this->plainText((string) ($topic->message ?? ''));
 
 				if (!$this->addContextPart($parts, $total, $maxTotal, 'Forum: ' . $subject, $text)) {
 					break;
 				}
+
+				$forumUsed++;
 			}
 		}
 
-		return trim(implode("\n\n---\n\n", $parts));
+		$context = trim(implode("\n\n---\n\n", $parts));
+
+		$this->logKnowledgeContext(
+			$context,
+			$parts,
+			[
+				'budget'      => $maxTotal,
+				'articleSeen' => $articleSeen,
+				'articleUsed' => $articleUsed,
+				'faqCategory' => $faqCatid,
+				'faqSeen'     => $faqSeen,
+				'faqUsed'     => $faqUsed,
+				'forumSeen'   => $forumSeen,
+				'forumUsed'   => $forumUsed,
+			]
+		);
+
+		return $context;
 	}
 
 	/**
@@ -676,5 +725,86 @@ class BearsamppaiHelper
 		$total  += $len;
 
 		return true;
+	}
+
+	/**
+	 * Record a diagnostic line in the module log.
+	 *
+	 * @param   string  $message  The message to record.
+	 *
+	 * @return  void
+	 *
+	 * @since   2.4.0
+	 */
+	private function logNotice(string $message): void
+	{
+		// Diagnostics run on every request, so a logging failure must never be
+		// able to break the chat itself.
+		try {
+			Log::addLogger(
+				['text_file' => 'mod_bearsamppai.php'],
+				Log::ALL,
+				['mod_bearsamppai']
+			);
+
+			Log::add(
+				$message,
+				Log::NOTICE,
+				'mod_bearsamppai'
+			);
+		} catch (\Throwable $e) {
+			// Intentionally ignored: logging is best effort.
+		}
+	}
+
+	/**
+	 * Shorten a value for inclusion in a log line.
+	 *
+	 * @param   string  $value    The value to shorten.
+	 * @param   int     $max      The maximum length to keep.
+	 *
+	 * @return  string
+	 *
+	 * @since   2.4.0
+	 */
+	private function truncateForLog(string $value, int $max): string
+	{
+		$value = preg_replace('/[\x00-\x1F\x7F]/', ' ', $value);
+		$value = trim((string) preg_replace('/\s+/', ' ', (string) $value));
+
+		return mb_strimwidth($value, 0, $max, '...');
+	}
+
+	/**
+	 * Record what knowledge context was actually assembled, so that a missing or
+	 * truncated answer can be diagnosed from the log rather than guessed at. Each
+	 * source reports how many items were seen against how many actually fitted, so
+	 * a source starved by the character budget is distinguishable from a source
+	 * that returned nothing at all.
+	 *
+	 * @param   string    $context  The assembled context.
+	 * @param   string[]  $parts    The individual context parts.
+	 * @param   array     $stats    Source counts and the character budget.
+	 *
+	 * @return  void
+	 *
+	 * @since   2.4.0
+	 */
+	private function logKnowledgeContext(string $context, array $parts, array $stats): void
+	{
+		$labels = [];
+
+		foreach ($parts as $part) {
+			$labels[] = $this->truncateForLog(explode("\n", (string) $part, 2)[0], 80);
+		}
+
+		$this->logNotice(
+			'KB context: chars=' . mb_strlen($context) . '/' . $stats['budget']
+			. ' parts=' . count($parts)
+			. ' articles=' . $stats['articleUsed'] . '/' . $stats['articleSeen']
+			. ' faq=' . $stats['faqUsed'] . '/' . $stats['faqSeen'] . ' (category ' . $stats['faqCategory'] . ')'
+			. ' forum=' . $stats['forumUsed'] . '/' . $stats['forumSeen']
+			. ' | ' . ($labels === [] ? '(no content)' : implode(' | ', $labels))
+		);
 	}
 }
