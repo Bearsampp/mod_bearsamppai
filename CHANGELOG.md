@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2026.09.30.4] - 2026-09-30
+## [2026.09.30.5] - 2026-09-30
 
 ### Added
 
@@ -13,8 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Update version to 2026.09.30.2 [skip ci] ([fbca79b](https://github.com/Bearsampp/mod_bearsamppai/commit/fbca79b))
-* Return the defaults to OpenCode Zen on paid models ([a50864e](https://github.com/Bearsampp/mod_bearsamppai/commit/a50864e))
-* Merge branch 'main' of https://github.com/Bearsampp/mod_bearsamppai ([d51b759](https://github.com/Bearsampp/mod_bearsamppai/commit/d51b759))
 * Update version to 2026.09.30.3 [skip ci] ([94aa06e](https://github.com/Bearsampp/mod_bearsamppai/commit/94aa06e))
+* Update version to 2026.09.30.4 [skip ci] ([480ecaf](https://github.com/Bearsampp/mod_bearsamppai/commit/480ecaf))
+* Load FAQ first so targeted KB entries can't be starved by bulk articles. Account for the part separator in the character budget. Clarify the KB source order. ([6130de2](https://github.com/Bearsampp/mod_bearsamppai/commit/6130de2))
 
