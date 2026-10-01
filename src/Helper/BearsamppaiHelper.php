@@ -79,6 +79,15 @@ class BearsamppaiHelper
 	private const DEFAULT_FALLBACK_MODEL = 'deepseek-v4-flash';
 
 	/**
+	 * Separator inserted between knowledge context parts. Charged against the
+	 * context limit so the configured maximum is the maximum actually sent.
+	 *
+	 * @var string
+	 * @since 2.4.0
+	 */
+	private const CONTEXT_SEPARATOR = "\n\n---\n\n";
+
+	/**
 	 * Handle the com_ajax "ask" method.
 	 *
 	 * @return  array  JSON-ready result (success/answer/error).
@@ -447,8 +456,11 @@ class BearsamppaiHelper
 
 	/**
 	 * Build a compact knowledge context string from the configured content
-	 * sources: articles (optionally restricted to selected categories), FAQ
-	 * articles read as question/answer pairs, and Kunena forum topics.
+	 * sources: FAQ articles read as question/answer pairs, articles (optionally
+	 * restricted to selected categories), and Kunena forum topics.
+	 *
+	 * Sources are added in that order of priority and share one character budget.
+	 * FAQ is placed first so a large article selection cannot starve it.
 	 *
 	 * @param   Registry  $params  The module parameters.
 	 *
@@ -466,33 +478,10 @@ class BearsamppaiHelper
 			$maxTotal = 20000;
 		}
 
-		// Articles: the selected categories, or every published article when none
-		// are selected. There is no separate item count - the context limit below
-		// is what decides how much is actually sent, so the newest items win and
-		// the rest are simply left out.
-		$categories = array_values(
-			array_filter(
-				ArrayHelper::toInteger((array) $params->get('articles_category_id', [])),
-				static fn ($id) => $id > 0
-			)
-		);
-
-		$articleSeen = 0;
-		$articleUsed = 0;
-
-		foreach ($this->loadArticles($params, 0, $categories) as $item) {
-			$articleSeen++;
-			$text = $this->plainText((string) ($item->introtext ?? '') . "\n" . (string) ($item->fulltext ?? ''));
-
-			if (!$this->addContextPart($parts, $total, $maxTotal, 'Article: ' . (string) $item->title, $text)) {
-				// Articles are newest first, so the rest are no more likely to fit.
-				break;
-			}
-
-			$articleUsed++;
-		}
-
-		// FAQ articles: the title is the question, the article text is the answer.
+		// FAQ first. FAQ entries are short, targeted, and the content an admin most
+		// wants answered, so they are placed ahead of the bulk article sources.
+		// Loading them last let a large article selection consume the whole budget
+		// and silently drop the FAQ, which looks identical to the model refusing.
 		$faqCatid = (int) $params->get('faq_category_id', 0);
 		$faqSeen  = 0;
 		$faqUsed  = 0;
@@ -523,9 +512,34 @@ class BearsamppaiHelper
 			}
 		}
 
-		// Kunena forum topics, excluded unless the site opts in. Note that a later
-		// source only gets a turn when an earlier one left budget: once articles
-		// have filled the limit, the FAQ and forum blocks are skipped entirely.
+		// Articles: the selected categories, or every published article when none
+		// are selected. There is no separate item count - the context limit below
+		// is what decides how much is actually sent, so the newest items win and
+		// the rest are simply left out.
+		$categories = array_values(
+			array_filter(
+				ArrayHelper::toInteger((array) $params->get('articles_category_id', [])),
+				static fn ($id) => $id > 0
+			)
+		);
+
+		$articleSeen = 0;
+		$articleUsed = 0;
+
+		foreach ($this->loadArticles($params, 0, $categories) as $item) {
+			$articleSeen++;
+			$text = $this->plainText((string) ($item->introtext ?? '') . "\n" . (string) ($item->fulltext ?? ''));
+
+			if (!$this->addContextPart($parts, $total, $maxTotal, 'Article: ' . (string) $item->title, $text)) {
+				// Articles are newest first, so the rest are no more likely to fit.
+				break;
+			}
+
+			$articleUsed++;
+		}
+
+		// Kunena forum topics, excluded unless the site opts in. Like articles, a
+		// later source only gets a turn when an earlier one left budget.
 		$forumSeen = 0;
 		$forumUsed = 0;
 
@@ -543,7 +557,7 @@ class BearsamppaiHelper
 			}
 		}
 
-		$context = trim(implode("\n\n---\n\n", $parts));
+		$context = trim(implode(self::CONTEXT_SEPARATOR, $parts));
 
 		$this->logKnowledgeContext(
 			$context,
@@ -716,6 +730,13 @@ class BearsamppaiHelper
 		$text  = trim(str_replace("\n", ' ', $text));
 		$part  = $label . "\n" . $text;
 		$len   = mb_strlen($part);
+
+		// The separator is inserted by the final implode, so it has to be charged
+		// against the budget too. Otherwise the assembled context overshoots the
+		// configured limit once there are enough parts to make it noticeable.
+		if ($parts !== []) {
+			$len += mb_strlen(self::CONTEXT_SEPARATOR);
+		}
 
 		if ($total + $len > $maxTotal) {
 			return false;
