@@ -76,7 +76,7 @@ class BearsamppaiHelper
 	 * @var string
 	 * @since 2.3.0
 	 */
-	private const DEFAULT_FALLBACK_MODEL = 'deepseek-v4-flash-free';
+	private const DEFAULT_FALLBACK_MODEL = 'space-bunny-free';
 
 	/**
 	 * Handle the com_ajax "ask" method.

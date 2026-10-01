@@ -54,7 +54,7 @@ See [Choosing the knowledge base content](#choosing-the-knowledge-base-content) 
 | Show AI chat widget | Enable the floating chat widget. |
 | AI API key | API key for the AI service. With the default endpoint this is an OpenCode Zen key. Read on the server only; never sent to the browser. |
 | AI model | Model to use, e.g. `big-pickle` (default). |
-| Fallback model | Tried once if the primary request times out, is rate limited (HTTP 429) or returns a server error (HTTP 5xx); defaults to `deepseek-v4-flash-free`. Leave blank to disable. |
+| Fallback model | Tried once if the primary request times out, is rate limited (HTTP 429) or returns a server error (HTTP 5xx); defaults to `space-bunny-free`. Leave blank to disable. |
 | AI endpoint | OpenAI-compatible chat completions endpoint (defaults to OpenCode Zen). |
 | Max response tokens | 64–4096, default 512. |
 | Temperature | 0–1, default 0.2 (low = factual answers). |

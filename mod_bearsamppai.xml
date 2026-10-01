@@ -102,7 +102,7 @@
 					type="text"
 					label="MOD_BEARSAMPPAI_FIELD_AI_FALLBACK_MODEL_LABEL"
 					description="MOD_BEARSAMPPAI_FIELD_AI_FALLBACK_MODEL_DESC"
-					default="deepseek-v4-flash-free"
+					default="space-bunny-free"
 				/>
 
 				<field
