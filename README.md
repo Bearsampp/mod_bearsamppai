@@ -4,7 +4,7 @@ A Joomla 5.4/6 site module that adds a floating **AI chat widget** to your site.
 
 ## Features
 
-- **Grounded AI chat** — a floating chat widget backed by any OpenAI-compatible chat completions API. The default is OpenRouter with a free model variant, so a free OpenRouter key is enough; point the endpoint, key and model at any other service if you prefer. Answers are grounded strictly in your site content.
+- **Grounded AI chat** — a floating chat widget backed by any OpenAI-compatible chat completions API. The default is OpenCode Zen on a paid model variant, so an OpenCode Zen key with credits is required; point the endpoint, key and model at any other service if you prefer. Answers are grounded strictly in your site content.
 - **Prompt-grounded answers** — the AI receives the articles, FAQ entries and forum topics you select as context and is instructed to answer only from that content, falling back to a configurable message when no knowledge matches. Content is used as grounding context only; the module does not render content blocks of its own.
 - **You choose the knowledge base** — multi-select the article categories to draw from, point the FAQ field at your FAQ category, and opt in to Kunena forum topics with a single switch. Installing Kunena never changes what the AI can see.
 - **Customizable chat UI**:
@@ -25,7 +25,7 @@ A Joomla 5.4/6 site module that adds a floating **AI chat widget** to your site.
 - Joomla 5.4 or newer (Joomla 6 ready)
 - PHP 8.1 or newer
 - Kunena 6.x (optional, only when you switch on *Include Kunena forum topics*)
-- An AI service API key (optional, only for the chat widget). With the default endpoint this is an OpenRouter key; any OpenAI-compatible service works if you also set the endpoint and model.
+- An AI service API key (optional, only for the chat widget). With the default endpoint this is an OpenCode Zen key; any OpenAI-compatible service works if you also set the endpoint and model.
 
 ## Installation
 
@@ -52,10 +52,10 @@ See [Choosing the knowledge base content](#choosing-the-knowledge-base-content) 
 | Parameter | Description |
 | --- | --- |
 | Show AI chat widget | Enable the floating chat widget. |
-| AI API key | API key for the AI service. With the default endpoint this is an OpenRouter key. Read on the server only; never sent to the browser. |
-| AI model | Model to use, e.g. `qwen/qwen3.8-27b:free` (default). |
-| Fallback model | Tried once if the primary request times out, is rate limited (HTTP 429) or returns a server error (HTTP 5xx); defaults to `google/gemma-4-31b-it:free`. Leave blank to disable. |
-| AI endpoint | OpenAI-compatible chat completions endpoint (defaults to OpenRouter). |
+| AI API key | API key for the AI service. With the default endpoint this is an OpenCode Zen key. Read on the server only; never sent to the browser. |
+| AI model | Model to use, e.g. `glm-5.3-flash` (default). |
+| Fallback model | Tried once if the primary request times out, is rate limited (HTTP 429) or returns a server error (HTTP 5xx); defaults to `deepseek-v4-flash`. Leave blank to disable. |
+| AI endpoint | OpenAI-compatible chat completions endpoint (defaults to OpenCode Zen). |
 | Max response tokens | 64–4096, default 512. |
 | Temperature | 0–1, default 0.2 (low = factual answers). |
 | Request timeout (seconds) | 5–120, default 30. |
