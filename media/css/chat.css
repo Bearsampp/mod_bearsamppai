@@ -320,6 +320,23 @@
 	color: var(--mbai-link);
 }
 
+.mod-bearsamppai__sources {
+	margin: 0.5rem 0 0;
+	padding: 0.5rem 0 0;
+	border-top: 1px solid currentColor;
+	list-style: none;
+	font-size: 0.85em;
+	opacity: 0.85;
+}
+
+.mod-bearsamppai__sources li {
+	margin: 0.2rem 0;
+}
+
+.mod-bearsamppai__sources li::before {
+	content: '\2192\00a0';
+}
+
 .mod-bearsamppai__msg-bubble code {
 	background: var(--mbai-code-bg);
 	padding: 0.1em 0.3em;

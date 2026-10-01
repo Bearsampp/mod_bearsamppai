@@ -172,6 +172,32 @@
 				/>
 
 				<field
+					name="chat_context_order"
+					type="list"
+					label="MOD_BEARSAMPPAI_FIELD_CONTEXT_ORDER_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CONTEXT_ORDER_DESC"
+					default="relevance"
+					filter="string"
+					validate="options"
+					>
+					<option value="relevance">MOD_BEARSAMPPAI_CONTEXT_ORDER_RELEVANCE</option>
+					<option value="newest">MOD_BEARSAMPPAI_CONTEXT_ORDER_NEWEST</option>
+				</field>
+
+				<field
+					name="chat_show_sources"
+					type="radio"
+					layout="joomla.form.field.radio.switcher"
+					label="MOD_BEARSAMPPAI_FIELD_SHOW_SOURCES_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_SHOW_SOURCES_DESC"
+					default="1"
+					filter="integer"
+					>
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+
+				<field
 					name="chat_heading"
 					type="text"
 					label="MOD_BEARSAMPPAI_FIELD_CHAT_HEADING_LABEL"

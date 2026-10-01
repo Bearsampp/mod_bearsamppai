@@ -79,6 +79,36 @@
 		return wrap;
 	}
 
+	function addSources(bubble, sources) {
+		const list = document.createElement('ul');
+
+		list.className = 'mod-bearsamppai__sources';
+
+		sources.forEach(function (source) {
+			if (!source || typeof source.url !== 'string' || source.url === '') {
+				return;
+			}
+
+			const item = document.createElement('li');
+			const link = document.createElement('a');
+
+			link.className = 'mod-bearsamppai__source';
+			link.href = source.url;
+			link.textContent = String(source.title || source.url);
+			link.target = '_blank';
+			link.rel = 'noopener noreferrer';
+
+			item.appendChild(link);
+			list.appendChild(item);
+		});
+
+		if (list.childNodes.length === 0) {
+			return;
+		}
+
+		bubble.appendChild(list);
+	}
+
 	function addTyping(container) {
 		const wrap = document.createElement('div');
 		wrap.className = 'mod-bearsamppai__msg mod-bearsamppai__msg--assistant';
@@ -115,7 +145,7 @@
 				const data = json && typeof json.data === 'object' ? json.data : (json || {});
 
 				if (data && data.success === true && typeof data.answer === 'string' && data.answer !== '') {
-					return { answer: data.answer };
+					return { answer: data.answer, sources: Array.isArray(data.sources) ? data.sources : [] };
 				}
 
 				if (data && typeof data.error === 'string' && data.error !== '') {
@@ -218,7 +248,13 @@
 			sendAsk(endpoint, moduleId, message)
 				.then(function (data) {
 					messages.removeChild(typing);
-					addBubble(messages, data.answer || data.error || 'No response', 'assistant');
+					const bubble = addBubble(messages, data.answer || data.error || 'No response', 'assistant');
+
+					// Source pages the answer was drawn from, so a visitor can open
+					// the original article rather than trusting the summary.
+					if (Array.isArray(data.sources) && data.sources.length) {
+						addSources(bubble, data.sources);
+					}
 				})
 				.catch(function (err) {
 					messages.removeChild(typing);

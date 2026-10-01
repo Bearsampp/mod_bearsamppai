@@ -16,7 +16,8 @@ use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Http\HttpFactory;
 use Joomla\CMS\Log\Log;
-use Joomla\CMS\Uri\Uri;
+	use Joomla\CMS\Router\Route;
+	use Joomla\CMS\Uri\Uri;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Registry\Registry;
 use Joomla\Utilities\ArrayHelper;
@@ -89,6 +90,32 @@ class BearsamppaiHelper
 	private const CONTEXT_SEPARATOR = "\n\n---\n\n";
 
 	/**
+	 * Words too common to carry meaning when scoring a question against content.
+	 *
+	 * @var string[]
+	 * @since 2.4.0
+	 */
+	private const STOP_WORDS = [
+		'a', 'about', 'above', 'after', 'all', 'also', 'am', 'an', 'and', 'any', 'are', 'as', 'at',
+		'be', 'because', 'been', 'but', 'by', 'can', 'did', 'do', 'does', 'doing', 'done', 'for',
+		'from', 'had', 'has', 'have', 'he', 'her', 'here', 'hers', 'him', 'his', 'how', 'i', 'if',
+		'in', 'into', 'is', 'it', 'its', 'just', 'me', 'more', 'most', 'my', 'no', 'nor', 'not',
+		'now', 'of', 'off', 'on', 'once', 'only', 'or', 'other', 'our', 'out', 'over', 'own',
+		'same', 'she', 'should', 'so', 'some', 'such', 'than', 'that', 'the', 'their', 'them',
+		'then', 'there', 'these', 'they', 'this', 'those', 'through', 'to', 'too', 'under', 'until',
+		'up', 'very', 'was', 'we', 'were', 'what', 'when', 'where', 'which', 'while', 'who',
+		'whom', 'why', 'will', 'with', 'would', 'you', 'your', 'yours',
+	];
+
+	/**
+	 * Minimum length in characters for a question term to influence scoring.
+	 *
+	 * @var int
+	 * @since 2.4.0
+	 */
+	private const MIN_TERM_LENGTH = 3;
+
+	/**
 	 * Marker prefixing a cached context, so a foreign or legacy cache value is
 	 * ignored rather than being sent to the AI as grounding.
 	 *
@@ -108,6 +135,20 @@ class BearsamppaiHelper
 	 * @since 2.4.0
 	 */
 	private const FAQ_BUDGET_SHARE = 0.5;
+
+	/**
+	 * How the context sources are chosen when the budget cannot hold everything.
+	 *
+	 * 'newest' keeps the newest articles first, which is right for release notes
+	 * and recent documentation. 'relevance' scores every candidate against the
+	 * visitor's question, which is right when the corpus is large and mostly
+	 * changelog noise around a few reference pages.
+	 *
+	 * @var string
+	 * @since 2.4.0
+	 */
+	public const ORDER_NEWEST   = 'newest';
+	public const ORDER_RELEVANCE = 'relevance';
 
 	/**
 	 * Handle the com_ajax "ask" method.
@@ -178,8 +219,21 @@ class BearsamppaiHelper
 		// Grounding is best effort: if it cannot be assembled the chat must still
 		// answer, so a failure here degrades to an empty context rather than
 		// failing the request.
+		$order    = $this->contextOrder($params);
+		$sources  = [];
+		$showSources = (int) $params->get('chat_show_sources', 1) === 1;
+
 		try {
-			$context = $this->getKnowledgeContext($params);
+			if ($order === self::ORDER_RELEVANCE) {
+				// Relevance needs the question, so this path cannot reuse the
+				// shared context cache: the same corpus yields a different context
+				// per question.
+				$built   = $this->getRelevanceContext($params, $message);
+				$context = (string) $built['context'];
+				$sources = $showSources ? (array) $built['sources'] : [];
+			} else {
+				$context = $this->getKnowledgeContext($params);
+			}
 		} catch (\Throwable $e) {
 			$this->logNotice('KB context failed to build: ' . $e->getMessage());
 			$context = '';
@@ -188,7 +242,7 @@ class BearsamppaiHelper
 		if ($context === '') {
 			$this->logNotice('KB empty context: no-data sent without calling the AI');
 
-			return ['success' => true, 'answer' => $noData, 'kb' => false];
+			return ['success' => true, 'answer' => $noData, 'kb' => false, 'sources' => []];
 		}
 
 		$siteUrl = Uri::root();
@@ -204,6 +258,8 @@ class BearsamppaiHelper
 			. "5. The website URL is: " . $siteUrl . "\n"
 			. "6. Format links as clickable Markdown: [Link Text](URL) only when necessary." . "\n"
 			. "7. Content is grouped by source. 'FAQ question' is a visitor question and the 'FAQ answer' that follows is the approved answer - match on meaning, not wording." . "\n"
+			. "8. Prefer the most specific source. A page written about one thing beats a list, index or release note that merely mentions it." . "\n"
+			. "9. If two sources conflict, the FAQ answer wins. Never combine an FAQ answer with a contradicting article." . "\n"
 			. "\n"
 			. "Knowledge base context follows between <kb> tags." . "\n"
 			. "<kb>" . $context . '</kb>';
@@ -330,19 +386,22 @@ class BearsamppaiHelper
 				return ['success' => false, 'error' => 'Unexpected response from the AI API'];
 			}
 
-		$answer = trim((string) $data['choices'][0]['message']['content']);
+$answer = trim((string) $data['choices'][0]['message']['content']);
 
 		$this->logNotice(
 			'KB answer: chars=' . mb_strlen($context)
 			. ' model=' . $model
 			. ' fallback=' . ($fallbackAttempted ? 'yes' : 'no')
 			. ' noData=' . ($answer === $noData ? 'yes' : 'no')
+			. ' order=' . $order
+			. ' sources=' . count($sources)
 		);
 
-			return [
-				'success' => true,
-				'answer'  => $answer,
-			];
+		return [
+			'success' => true,
+			'answer'  => $answer,
+			'sources' => $sources,
+		];
 		} catch (\Throwable $e) {
 			if ($fallbackAttempted && $this->isTimeoutException($e)) {
 				return [
@@ -498,11 +557,7 @@ class BearsamppaiHelper
 	{
 		$parts = [];
 		$total = 0;
-		$maxTotal = (int) $params->get('chat_context_limit', 20000);
-
-		if ($maxTotal < 1000 || $maxTotal > 200000) {
-			$maxTotal = 20000;
-		}
+		$maxTotal = $this->contextLimit($params);
 
 		// The assembled context only changes when the selected content or the
 		// parameters change, so reuse the last result until then. The signature
@@ -549,10 +604,11 @@ class BearsamppaiHelper
 						$parts,
 						$total,
 						$maxTotal,
-						'FAQ question: ' . $question,
-						'FAQ answer: ' . $answer,
-						$faqLimit - $faqTotal
-					)
+'FAQ question: ' . $question,
+					'FAQ answer: ' . $answer,
+					$faqLimit,
+					$faqTotal
+				)
 				) {
 					// Skipped, not fatal: a later FAQ entry may be short enough to
 					// fit, so the loop continues rather than ending the FAQ source.
@@ -563,11 +619,8 @@ class BearsamppaiHelper
 					continue;
 				}
 
-				$faqTotal += mb_strlen('FAQ question: ' . $question)
-					+ mb_strlen('FAQ answer: ' . $answer)
-					+ ($parts === [] ? 0 : mb_strlen(self::CONTEXT_SEPARATOR));
-
-				$faqUsed++;
+// $faqTotal is advanced by addContextPart() itself.
+			$faqUsed++;
 			}
 		}
 
@@ -649,6 +702,357 @@ class BearsamppaiHelper
 		$this->writeCachedContext($cache, $cacheKey, $context);
 
 		return $context;
+	}
+
+	/**
+	 * Reduce a question to the terms that can meaningfully match content.
+	 *
+	 * Stop words are dropped and a few characters are trimmed from each end so
+	 * plurals and simple verb endings still match: "modules" matches "module",
+	 * "supports" matches "support".
+	 *
+	 * @param   string  $question  The visitor's question.
+	 *
+	 * @return  string[]  Lowercased, de-duplicated terms.
+	 *
+	 * @since   2.4.0
+	 */
+	private function queryTerms(string $question): array
+	{
+		$clean  = mb_strtolower($question);
+		$clean  = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $clean) ?? '';
+		$stems  = [];
+
+		foreach (preg_split('/\s+/u', trim($clean)) ?: [] as $word) {
+			if (mb_strlen($word) < self::MIN_TERM_LENGTH) {
+				continue;
+			}
+
+			if (in_array($word, self::STOP_WORDS, true)) {
+				continue;
+			}
+
+			$stem = mb_substr($word, 0, -1);
+
+			$stems[$word] = true;
+
+			if ($stem !== '' && !in_array($stem, self::STOP_WORDS, true)) {
+				$stems[$stem] = true;
+			}
+		}
+
+		return array_keys($stems);
+	}
+
+	/**
+	 * Score a candidate against the question terms.
+	 *
+	 * A term in the title is worth far more than one buried in the body, because
+	 * a title is the page's own summary of what it covers. The score is not a
+	 * confidence value, only a way to rank candidates against each other.
+	 *
+	 * @param   string[]  $terms   Terms from the visitor's question.
+	 * @param   string    $title   Candidate title.
+	 * @param   string    $body    Candidate body text.
+	 *
+	 * @return  float  The score, 0 when nothing matched.
+	 *
+	 * @since   2.4.0
+	 */
+	private function scoreCandidate(array $terms, string $title, string $body): float
+	{
+		if ($terms === []) {
+			return 0.0;
+		}
+
+		$titleLc = mb_strtolower($title);
+		$bodyLc  = mb_strtolower($body);
+		$score   = 0.0;
+
+		foreach ($terms as $term) {
+			if (mb_strpos($titleLc, $term) !== false) {
+				$score += 3.0;
+			}
+
+			$hits = substr_count($bodyLc, $term);
+
+			if ($hits > 0) {
+				// Diminishing returns: one mention is evidence, twenty is a long page
+				// that happens to contain the word.
+				$score += 1.0 + min($hits, 10) / 10;
+			}
+		}
+
+		return $score;
+	}
+
+	/**
+	 * Order candidates by how well they match the question.
+	 *
+	 * Items with no term overlap are kept but sorted last, so a question the
+	 * corpus does not cover still gets some content rather than an empty context.
+	 *
+	 * @param   array    $candidates  Candidate records from loadCandidates().
+	 * @param   string[] $terms       Terms from the visitor's question.
+	 *
+	 * @return  array    The same records, best match first.
+	 *
+	 * @since   2.4.0
+	 */
+	private function rankCandidates(array $candidates, array $terms): array
+	{
+		foreach ($candidates as $index => $candidate) {
+			$candidates[$index]['score'] = $this->scoreCandidate(
+				$terms,
+				(string) ($candidate['title'] ?? ''),
+				(string) ($candidate['body'] ?? '')
+			);
+		}
+
+		usort(
+			$candidates,
+			static fn ($a, $b) => [$b['score'], $a['position']] <=> [$a['score'], $b['position']]
+		);
+
+		return $candidates;
+	}
+
+	/**
+	 * Load every candidate source once, unscored and unbudgeted.
+	 *
+	 * Relevance ranking needs to see the whole corpus before it can choose, so
+	 * this returns flat records. Newest ordering does not need it and keeps using
+	 * the budgeted loop directly.
+	 *
+	 * @param   Registry  $params  The module parameters.
+	 *
+	 * @return  array[]  Records with label, body, url, kind, faq and position.
+	 *
+	 * @since   2.4.0
+	 */
+	private function loadCandidates(Registry $params): array
+	{
+		$candidates = [];
+		$position   = 0;
+
+		$faqCatid = (int) $params->get('faq_category_id', 0);
+
+		if ($faqCatid > 0) {
+			foreach ($this->loadArticles($params, 0, [$faqCatid], 'ordering', 'ASC') as $item) {
+				$question = $this->plainText((string) ($item->title ?? ''));
+
+				if ($question === '') {
+					continue;
+				}
+
+				$answer = $this->plainText((string) ($item->introtext ?? '') . "\n" . (string) ($item->fulltext ?? ''));
+
+				$candidates[] = [
+					'label'    => 'FAQ question: ' . $question,
+					'body'     => 'FAQ answer: ' . $answer,
+					'title'    => $question,
+					'url'      => $this->articleUrl($item),
+					'kind'     => 'faq',
+					'faq'      => true,
+					'position' => $position++,
+				];
+			}
+		}
+
+		$categories = array_values(
+			array_filter(
+				ArrayHelper::toInteger((array) $params->get('articles_category_id', [])),
+				static fn ($id) => $id > 0
+			)
+		);
+
+		foreach ($this->loadArticles($params, 0, $categories) as $item) {
+			$title = trim((string) $item->title ?? '');
+
+			$candidates[] = [
+				'label'    => 'Article: ' . $title,
+				'body'     => $this->plainText((string) ($item->introtext ?? '') . "\n" . (string) ($item->fulltext ?? '')),
+				'title'    => $title,
+				'url'      => $this->articleUrl($item),
+				'kind'     => 'article',
+				'faq'      => false,
+				'position' => $position++,
+			];
+		}
+
+		if ((int) $params->get('show_forum', 0) === 1) {
+			foreach ($this->loadForumTopics($params) as $topic) {
+				$subject = trim((string) ($topic->subject ?? 'Forum post'));
+
+				$candidates[] = [
+					'label'    => 'Forum: ' . $subject,
+					'body'     => $this->plainText((string) ($topic->message ?? '')),
+					'title'    => $subject,
+					'url'      => '',
+					'kind'     => 'forum',
+					'faq'      => false,
+					'position' => $position++,
+				];
+			}
+		}
+
+		return $candidates;
+	}
+
+	/**
+	 * Build the public URL for an article item when the model can supply one.
+	 *
+	 * @param   object  $item  An article item from the site ArticlesModel.
+	 *
+	 * @return  string  The URL, or an empty string when it cannot be built.
+	 *
+	 * @since   2.4.0
+	 */
+	private function articleUrl(object $item): string
+	{
+		$link = trim((string) ($item->link ?? ''));
+
+		if ($link !== '') {
+			return $link;
+		}
+
+		$id = (int) ($item->id ?? 0);
+
+		if ($id <= 0) {
+			return '';
+		}
+
+		try {
+			return (string) Route::_('index.php?option=com_content&view=article&id=' . $id);
+		} catch (\Throwable $e) {
+			return '';
+		}
+	}
+
+	/**
+	 * Build a relevance-ordered knowledge context for one question.
+	 *
+	 * @param   Registry  $params    The module parameters.
+	 * @param   string    $question  The visitor's question.
+	 *
+	 * @return  array{context: string, sources: array}
+	 *
+	 * @since   2.4.0
+	 */
+	private function getRelevanceContext(Registry $params, string $question): array
+	{
+		$maxTotal = $this->contextLimit($params);
+		$candidates = $this->loadCandidates($params);
+
+		if ($candidates === []) {
+			return ['context' => '', 'sources' => []];
+		}
+
+		$candidates = $this->rankCandidates($candidates, $this->queryTerms($question));
+
+		$parts   = [];
+		$sources = [];
+		$total   = 0;
+		$used    = ['faq' => 0, 'article' => 0, 'forum' => 0];
+		$matched = 0;
+
+		// No per-source cap here. Candidates are already ranked, so a matching FAQ
+		// that outranks everything should not be discarded just because it is FAQ
+		// content, and the overall budget still bounds the result.
+		foreach ($candidates as $candidate) {
+			if (!$this->addContextPart(
+				$parts,
+				$total,
+				$maxTotal,
+				$candidate['label'],
+				$candidate['body']
+			)) {
+				continue;
+			}
+
+			$used[$candidate['kind']]++;
+
+			if (($candidate['score'] ?? 0.0) > 0.0) {
+				$matched++;
+
+				if (count($sources) < 5 && $candidate['url'] !== '') {
+					$sources[] = ['title' => $candidate['title'], 'url' => $candidate['url']];
+				}
+			}
+		}
+
+		$context = trim(implode(self::CONTEXT_SEPARATOR, $parts));
+
+		$this->logNotice(
+			'KB context: chars=' . mb_strlen($context) . '/' . $maxTotal
+			. ' parts=' . count($parts)
+			. ' faq=' . $used['faq'] . '/' . $this->countKind($candidates, 'faq')
+			. ' articles=' . $used['article'] . '/' . $this->countKind($candidates, 'article')
+			. ' forum=' . $used['forum'] . '/' . $this->countKind($candidates, 'forum')
+			. ' matched=' . $matched
+			. ' order=relevance'
+		);
+
+		return ['context' => $context, 'sources' => $sources];
+	}
+
+	/**
+	 * Count candidates of one kind.
+	 *
+	 * @param   array[]  $candidates  Candidate records.
+	 * @param   string   $kind        The kind to count.
+	 *
+	 * @return  int
+	 *
+	 * @since   2.4.0
+	 */
+	private function countKind(array $candidates, string $kind): int
+	{
+		$count = 0;
+
+		foreach ($candidates as $candidate) {
+			if (($candidate['kind'] ?? '') === $kind) {
+				$count++;
+			}
+		}
+
+		return $count;
+	}
+
+	/**
+	 * Resolve the configured context budget.
+	 *
+	 * @param   Registry  $params  The module parameters.
+	 *
+	 * @return  int  Characters, within the supported range.
+	 *
+	 * @since   2.4.0
+	 */
+	private function contextLimit(Registry $params): int
+	{
+		$maxTotal = (int) $params->get('chat_context_limit', 20000);
+
+		if ($maxTotal < 1000 || $maxTotal > 200000) {
+			return 20000;
+		}
+
+		return $maxTotal;
+	}
+
+	/**
+	 * Resolve the configured source ordering.
+	 *
+	 * @param   Registry  $params  The module parameters.
+	 *
+	 * @return  string  Either ORDER_NEWEST or ORDER_RELEVANCE.
+	 *
+	 * @since   2.4.0
+	 */
+	private function contextOrder(Registry $params): string
+	{
+		$order = trim((string) $params->get('chat_context_order', self::ORDER_NEWEST));
+
+		return $order === self::ORDER_RELEVANCE ? self::ORDER_RELEVANCE : self::ORDER_NEWEST;
 	}
 
 	/**
@@ -1011,11 +1415,13 @@ class BearsamppaiHelper
 	/**
 	 * Append a labelled text part to the context while honouring the character budget.
 	 *
-	 * @param   array   &$parts    Context parts accumulator.
-	 * @param   int     &$total    Running character count.
-	 * @param   int     $maxTotal  Maximum context length.
-	 * @param   string  $label     Source label (e.g. "Article: ...").
-	 * @param   string  $text      Plain text content.
+	 * @param   array   &$parts         Context parts accumulator.
+	 * @param   int     &$total         Running character count across all sources.
+	 * @param   int     $maxTotal       Maximum context length.
+	 * @param   string  $label          Source label (e.g. "Article: ...").
+	 * @param   string  $text           Plain text content.
+	 * @param   int     $sourceLimit    Cap for this source on its own, 0 for none.
+	 * @param   ?int    &$sourceTotal   Running character count for this source.
 	 *
 	 * @return  boolean  True when the part was added, false when it did not fit.
 	 *
@@ -1027,12 +1433,12 @@ class BearsamppaiHelper
 		int $maxTotal,
 		string $label,
 		string $text,
-		int $sourceLimit = 0
+		int $sourceLimit = 0,
+		?int &$sourceTotal = null
 	): bool {
-		$text  = trim(str_replace("\n", ' ', $text));
-		$part  = $label . "\n" . $text;
-		$len   = mb_strlen($part);
-		$limit = $sourceLimit > 0 ? min($sourceLimit, $maxTotal) : $maxTotal;
+		$text = trim(str_replace("\n", ' ', $text));
+		$part = $label . "\n" . $text;
+		$len  = mb_strlen($part);
 
 		// The separator is inserted by the final implode, so it has to be charged
 		// against the budget too. Otherwise the assembled context overshoots the
@@ -1041,12 +1447,24 @@ class BearsamppaiHelper
 			$len += mb_strlen(self::CONTEXT_SEPARATOR);
 		}
 
-		if ($total + $len > $limit) {
+		// The overall budget is always respected. A per-source cap is measured
+		// against that source's own running total, not the overall one: counting
+		// earlier sources again would shrink each source's real allowance and
+		// silently starve whichever content happens to be added first.
+		if ($total + $len > $maxTotal) {
+			return false;
+		}
+
+		if ($sourceLimit > 0 && $sourceTotal !== null && $sourceTotal + $len > $sourceLimit) {
 			return false;
 		}
 
 		$parts[] = $part;
 		$total  += $len;
+
+		if ($sourceTotal !== null) {
+			$sourceTotal += $len;
+		}
 
 		return true;
 	}
