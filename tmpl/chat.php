@@ -18,14 +18,10 @@ use Joomla\CMS\Uri\Uri;
 /** @var \Joomla\CMS\Application\SiteApplication $app The site application. */
 /** @var \Joomla\Registry\Registry $params The module parameters. */
 
-if ((int) $params->get('show_chat', 0) !== 1) {
-	return;
-}
-
-// Register chat assets only when the chat is enabled. The files ship inside the
-// module folder, so they have to be addressed through it. Pointing at the shared
-// /media tree resolves to a file that does not exist and the WebAssetManager then
-// silently drops both assets, leaving the chat unstyled and inert.
+// Register chat assets. The files ship inside the module folder, so they have to
+// be addressed through it. Pointing at the shared /media tree resolves to a file
+// that does not exist and the WebAssetManager then silently drops both assets,
+// leaving the chat unstyled and inert.
 $moduleBase = rtrim(Uri::root(), '/') . '/modules/' . $module->module;
 $assetOpts  = [];
 $manifest   = JPATH_ROOT . '/modules/' . $module->module . '/' . $module->module . '.xml';

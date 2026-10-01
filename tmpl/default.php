@@ -18,7 +18,5 @@ use Joomla\CMS\Language\Text;
 $moduleclassSfx = htmlspecialchars((string) $params->get('moduleclass_sfx', ''), ENT_QUOTES, 'UTF-8');
 ?>
 <div class="mod-bearsamppai<?php echo $moduleclassSfx ? ' ' . $moduleclassSfx : ''; ?>">
-	<?php if ((int) $params->get('show_chat', 0) === 1) : ?>
-		<?php require __DIR__ . '/chat.php'; ?>
-	<?php endif; ?>
+	<?php require __DIR__ . '/chat.php'; ?>
 </div>
