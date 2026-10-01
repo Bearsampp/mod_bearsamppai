@@ -76,7 +76,10 @@
 		container.appendChild(wrap);
 		scrollToBottom(container);
 
-		return wrap;
+		// The bubble, not the row. The row is a flex container, so appending the
+		// source list to it would add a narrow third column beside the message
+		// instead of sitting underneath it.
+		return inner;
 	}
 
 	function addSources(bubble, sources) {
@@ -107,6 +110,14 @@
 		}
 
 		bubble.appendChild(list);
+
+		// The list adds height after the bubble was added, so the scroll position
+		// is re-applied to keep a long source list from pushing it out of view.
+		const messages = bubble.closest('.mod-bearsamppai__chat-messages');
+
+		if (messages) {
+			scrollToBottom(messages);
+		}
 	}
 
 	function addTyping(container) {

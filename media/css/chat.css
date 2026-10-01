@@ -321,16 +321,21 @@
 }
 
 .mod-bearsamppai__sources {
+	display: block;
+	width: 100%;
 	margin: 0.5rem 0 0;
 	padding: 0.5rem 0 0;
 	border-top: 1px solid currentColor;
 	list-style: none;
 	font-size: 0.85em;
 	opacity: 0.85;
+	clear: both;
 }
 
 .mod-bearsamppai__sources li {
 	margin: 0.2rem 0;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
 }
 
 .mod-bearsamppai__sources li::before {
