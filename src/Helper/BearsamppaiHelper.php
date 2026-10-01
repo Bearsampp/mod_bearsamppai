@@ -527,11 +527,12 @@ class BearsamppaiHelper
 		// fills the limit on its own and leaves the articles nothing, so a question
 		// whose answer lives on a module page fails even though that page is a
 		// selected source.
-		$faqCatid = (int) $params->get('faq_category_id', 0);
-		$faqSeen  = 0;
-		$faqUsed  = 0;
-		$faqLimit = (int) round($maxTotal * self::FAQ_BUDGET_SHARE);
-		$faqTotal = 0;
+		$faqCatid  = (int) $params->get('faq_category_id', 0);
+		$faqSeen   = 0;
+		$faqUsed   = 0;
+		$faqLimit  = (int) round($maxTotal * self::FAQ_BUDGET_SHARE);
+		$faqTotal  = 0;
+		$faqSkip   = [];
 
 		if ($faqCatid > 0) {
 			foreach ($this->loadArticles($params, 0, [$faqCatid], 'ordering', 'ASC') as $item) {
@@ -555,6 +556,10 @@ class BearsamppaiHelper
 				) {
 					// Skipped, not fatal: a later FAQ entry may be short enough to
 					// fit, so the loop continues rather than ending the FAQ source.
+					// Recorded because the FAQ is ordered by the ordering column,
+					// not by relevance, so which entries are lost is otherwise
+					// invisible and looks like the model refusing.
+					$faqSkip[] = $question;
 					continue;
 				}
 
@@ -624,6 +629,13 @@ class BearsamppaiHelper
 			. ' articles=' . $articleUsed . '/' . $articleSeen
 			. ' forum=' . $forumUsed . '/' . $forumSeen
 		);
+
+		if ($faqSkip !== []) {
+			$this->logNotice(
+				'KB dropped ' . count($faqSkip) . ' FAQ entr(ies) for budget: '
+				. mb_substr(implode(' | ', $faqSkip), 0, 300)
+			);
+		}
 
 		if ($articleSkipped !== []) {
 			// A skipped article is the usual reason a question about a page that is
