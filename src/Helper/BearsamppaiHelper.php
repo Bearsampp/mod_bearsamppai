@@ -98,6 +98,18 @@ class BearsamppaiHelper
 	private const CACHE_PREFIX = "BSKB1:";
 
 	/**
+	 * Share of the context budget the FAQ may use.
+	 *
+	 * The FAQ is loaded first, so an uncapped FAQ consumes the whole limit and
+	 * leaves nothing for the article sources. Reserving half keeps a question
+	 * answerable from a module page even when the FAQ is large.
+	 *
+	 * @var float
+	 * @since 2.4.0
+	 */
+	private const FAQ_BUDGET_SHARE = 0.5;
+
+	/**
 	 * Handle the com_ajax "ask" method.
 	 *
 	 * @return  array  JSON-ready result (success/answer/error).
@@ -510,9 +522,16 @@ class BearsamppaiHelper
 		// wants answered, so they are placed ahead of the bulk article sources.
 		// Loading them last let a large article selection consume the whole budget
 		// and silently drop the FAQ, which looks identical to the model refusing.
+		//
+		// The FAQ is still capped, but only at half the budget. An uncapped FAQ
+		// fills the limit on its own and leaves the articles nothing, so a question
+		// whose answer lives on a module page fails even though that page is a
+		// selected source.
 		$faqCatid = (int) $params->get('faq_category_id', 0);
 		$faqSeen  = 0;
 		$faqUsed  = 0;
+		$faqLimit = (int) round($maxTotal * self::FAQ_BUDGET_SHARE);
+		$faqTotal = 0;
 
 		if ($faqCatid > 0) {
 			foreach ($this->loadArticles($params, 0, [$faqCatid], 'ordering', 'ASC') as $item) {
@@ -530,11 +549,18 @@ class BearsamppaiHelper
 						$total,
 						$maxTotal,
 						'FAQ question: ' . $question,
-						'FAQ answer: ' . $answer
+						'FAQ answer: ' . $answer,
+						$faqLimit - $faqTotal
 					)
 				) {
-					break;
+					// Skipped, not fatal: a later FAQ entry may be short enough to
+					// fit, so the loop continues rather than ending the FAQ source.
+					continue;
 				}
+
+				$faqTotal += mb_strlen('FAQ question: ' . $question)
+					+ mb_strlen('FAQ answer: ' . $answer)
+					+ ($parts === [] ? 0 : mb_strlen(self::CONTEXT_SEPARATOR));
 
 				$faqUsed++;
 			}
@@ -551,16 +577,20 @@ class BearsamppaiHelper
 			)
 		);
 
-		$articleSeen = 0;
-		$articleUsed = 0;
+		$articleSeen    = 0;
+		$articleUsed    = 0;
+		$articleSkipped = [];
 
 		foreach ($this->loadArticles($params, 0, $categories) as $item) {
 			$articleSeen++;
 			$text = $this->plainText((string) ($item->introtext ?? '') . "\n" . (string) ($item->fulltext ?? ''));
 
 			if (!$this->addContextPart($parts, $total, $maxTotal, 'Article: ' . (string) $item->title, $text)) {
-				// Articles are newest first, so the rest are no more likely to fit.
-				break;
+				// Skipped, not fatal. Breaking here dropped every article after the
+				// first one that did not fit, which is why a module page in a
+				// selected category could be missing from the context entirely.
+				$articleSkipped[] = (string) $item->title;
+				continue;
 			}
 
 			$articleUsed++;
@@ -578,7 +608,7 @@ class BearsamppaiHelper
 				$text    = $this->plainText((string) ($topic->message ?? ''));
 
 				if (!$this->addContextPart($parts, $total, $maxTotal, 'Forum: ' . $subject, $text)) {
-					break;
+					continue;
 				}
 
 				$forumUsed++;
@@ -594,6 +624,15 @@ class BearsamppaiHelper
 			. ' articles=' . $articleUsed . '/' . $articleSeen
 			. ' forum=' . $forumUsed . '/' . $forumSeen
 		);
+
+		if ($articleSkipped !== []) {
+			// A skipped article is the usual reason a question about a page that is
+			// a selected source still comes back as no-data, so name them.
+			$this->logNotice(
+				'KB dropped ' . count($articleSkipped) . ' article(s) for budget: '
+				. mb_substr(implode(' | ', $articleSkipped), 0, 300)
+			);
+		}
 
 		$this->writeCachedContext($cache, $cacheKey, $context);
 
@@ -949,11 +988,18 @@ class BearsamppaiHelper
 	 *
 	 * @since   2.1.0
 	 */
-	private function addContextPart(array &$parts, int &$total, int $maxTotal, string $label, string $text): bool
-	{
+	private function addContextPart(
+		array &$parts,
+		int &$total,
+		int $maxTotal,
+		string $label,
+		string $text,
+		int $sourceLimit = 0
+	): bool {
 		$text  = trim(str_replace("\n", ' ', $text));
 		$part  = $label . "\n" . $text;
 		$len   = mb_strlen($part);
+		$limit = $sourceLimit > 0 ? min($sourceLimit, $maxTotal) : $maxTotal;
 
 		// The separator is inserted by the final implode, so it has to be charged
 		// against the budget too. Otherwise the assembled context overshoots the
@@ -962,7 +1008,7 @@ class BearsamppaiHelper
 			$len += mb_strlen(self::CONTEXT_SEPARATOR);
 		}
 
-		if ($total + $len > $maxTotal) {
+		if ($total + $len > $limit) {
 			return false;
 		}
 
