@@ -89,6 +89,15 @@ class BearsamppaiHelper
 	private const CONTEXT_SEPARATOR = "\n\n---\n\n";
 
 	/**
+	 * Marker prefixing a cached context, so a foreign or legacy cache value is
+	 * ignored rather than being sent to the AI as grounding.
+	 *
+	 * @var string
+	 * @since 2.4.0
+	 */
+	private const CACHE_PREFIX = "BSKB1:";
+
+	/**
 	 * Handle the com_ajax "ask" method.
 	 *
 	 * @return  array  JSON-ready result (success/answer/error).
@@ -154,7 +163,15 @@ class BearsamppaiHelper
 		}
 
 		// Build the knowledge base context from the configured content sources.
-		$context = $this->getKnowledgeContext($params);
+		// Grounding is best effort: if it cannot be assembled the chat must still
+		// answer, so a failure here degrades to an empty context rather than
+		// failing the request.
+		try {
+			$context = $this->getKnowledgeContext($params);
+		} catch (\Throwable $e) {
+			$this->logNotice('KB context failed to build: ' . $e->getMessage());
+			$context = '';
+		}
 
 		if ($context === '') {
 			$this->logNotice('KB empty context: no-data sent without calling the AI');
@@ -481,9 +498,9 @@ class BearsamppaiHelper
 		$signature = $this->getContextSignature($params, $maxTotal);
 		$cache     = $this->getContextCache();
 		$cacheKey  = 'mod_bearsamppai.context.' . $signature;
-		$cached    = $cache === null ? false : $cache->get($cacheKey);
+		$cached    = $this->readCachedContext($cache, $cacheKey);
 
-		if (is_string($cached) && $cached !== '') {
+		if ($cached !== null) {
 			$this->logNotice('KB context: cache hit chars=' . mb_strlen($cached));
 
 			return $cached;
@@ -578,11 +595,83 @@ class BearsamppaiHelper
 			. ' forum=' . $forumUsed . '/' . $forumSeen
 		);
 
-		if ($cache !== null) {
-			$cache->store($context, $cacheKey);
-		}
+		$this->writeCachedContext($cache, $cacheKey, $context);
 
 		return $context;
+	}
+
+	/**
+	 * Read the cached knowledge context.
+	 *
+	 * A cache read must never be able to fail the request, so any cache problem
+	 * is reported as a miss and the context is rebuilt as normal.
+	 *
+	 * @param   ?\Joomla\CMS\Cache\CacheController  $cache  The cache handle.
+	 * @param   string                              $key    The cache key.
+	 *
+	 * @return  ?string  The context, or null when there is no usable entry.
+	 *
+	 * @since   2.4.0
+	 */
+	private function readCachedContext(?\Joomla\CMS\Cache\CacheController $cache, string $key): ?string
+	{
+		if ($cache === null) {
+			return null;
+		}
+
+		try {
+			$cached = $cache->get($key);
+
+			if (!is_string($cached) || $cached === '') {
+				return null;
+			}
+
+			// Entries are stored compressed, so a plain string means a stale or
+			// foreign value that must not be treated as context.
+			if (!str_starts_with($cached, self::CACHE_PREFIX)) {
+				return null;
+			}
+
+			$plain = @gzuncompress(substr($cached, strlen(self::CACHE_PREFIX)));
+
+			return is_string($plain) && $plain !== '' ? $plain : null;
+		} catch (\Throwable $e) {
+			// A cache that cannot be read is simply a miss.
+		}
+
+		return null;
+	}
+
+	/**
+	 * Write the knowledge context to the cache.
+	 *
+	 * The context can reach the full 200000 character ceiling, which is too large
+	 * to store raw in some cache backends, so it is compressed. A cache that
+	 * cannot be written is ignored: it only costs a rebuild next time.
+	 *
+	 * @param   ?\Joomla\CMS\Cache\CacheController  $cache    The cache handle.
+	 * @param   string                              $key      The cache key.
+	 * @param   string                              $context  The context to store.
+	 *
+	 * @return  void
+	 *
+	 * @since   2.4.0
+	 */
+	private function writeCachedContext(?\Joomla\CMS\Cache\CacheController $cache, string $key, string $context): void
+	{
+		if ($cache === null) {
+			return;
+		}
+
+		try {
+			$compressed = gzcompress($context);
+
+			if (is_string($compressed) && $compressed !== '') {
+				$cache->store(self::CACHE_PREFIX . $compressed, $key);
+			}
+		} catch (\Throwable $e) {
+			// Caching is an optimisation, never a requirement.
+		}
 	}
 
 	/**
@@ -642,8 +731,8 @@ class BearsamppaiHelper
 				$query = $db->getQuery(true)
 					->select(
 						[
-							$db->quoteName('MAX(a.modified)'),
-							$db->quoteName('COUNT(a.id)'),
+							'MAX(a.modified) AS bsk_max_modified',
+							'COUNT(a.id) AS bsk_count',
 						]
 					)
 					->from($db->quoteName('#__content', 'a'))
@@ -660,7 +749,8 @@ class BearsamppaiHelper
 				$row = $db->loadObject();
 
 				if (is_object($row)) {
-					$stamp['articles'] = (string) ($row->MAX ?? $row->{'MAX(a.modified)'} ?? '') . ':' . (string) ($row->COUNT ?? $row->{'COUNT(a.id)'} ?? '0');
+					$stamp['articles'] = (string) ($row->bsk_max_modified ?? '')
+						. ':' . (string) ($row->bsk_count ?? '0');
 				}
 			}
 
@@ -669,8 +759,8 @@ class BearsamppaiHelper
 				$query = $db->getQuery(true)
 					->select(
 						[
-							$db->quoteName('MAX(t.last_post_time)'),
-							$db->quoteName('COUNT(t.id)'),
+							'MAX(t.last_post_time) AS bsk_max_posted',
+							'COUNT(t.id) AS bsk_count',
 						]
 					)
 					->from($db->quoteName('#__kunena_topics', 't'))
@@ -680,7 +770,8 @@ class BearsamppaiHelper
 				$row = $db->loadObject();
 
 				if (is_object($row)) {
-					$stamp['forum'] = (string) ($row->MAX ?? $row->{'MAX(t.last_post_time)'} ?? '') . ':' . (string) ($row->COUNT ?? $row->{'COUNT(t.id)'} ?? '0');
+					$stamp['forum'] = (string) ($row->bsk_max_posted ?? '')
+						. ':' . (string) ($row->bsk_count ?? '0');
 				}
 			}
 		} catch (\Throwable $e) {
