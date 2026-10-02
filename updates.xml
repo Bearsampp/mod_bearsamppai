@@ -5,6 +5,7 @@
         <description>Bearsampp AI - knowledge base chat widget for Joomla</description>
         <element>mod_bearsamppai</element>
         <type>module</type>
+        <client>site</client>
         <version>2026.10.02</version>
         <infourl title="Bearsampp AI">https://bearsampp.com</infourl>
         <downloads>
@@ -16,5 +17,6 @@
             <tag>zen</tag>
             <tag>knowledgebase</tag>
         </tags>
+        <targetplatform name="joomla" version="[56]\.[0-9]+" />
     </update>
 </updates>
