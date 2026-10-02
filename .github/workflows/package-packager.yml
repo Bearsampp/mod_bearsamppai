@@ -22,12 +22,15 @@ jobs:
           token: ${{ secrets.GH_PAT }}
 
       - name: Joomla Extension Packager
-        uses: N6REJ/joomla-packager@316d835d092b8e84328e838efc522055727c8407 # 2026.9.28 - packaged updates.xml synced to the build version
+        uses: N6REJ/joomla-packager@3ef7f233e49ce7b458c28b69b6a25e8312151c84 # 2026.10.2 - fills in the update feed fields Joomla needs to match
         id: package
         with:
           extension-name: 'mod_bearsamppai'
           extension-xml: 'mod_bearsamppai.xml'
           extension-type: 'module'
+          # Match Joomla 5 and 6 so J5.4 installs are offered the update too;
+          # only applied when updates.xml does not already declare a platform.
+          targetplatform-version: '[56]\.[0-9]+'
           author: 'Bearsampp'
           copyright-holder: 'Bearsampp'
           copyright-start-year: '2026'
