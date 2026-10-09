@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1",
+  "owner": "Bearsampp",
+  "repo": "mod_bearsamppai",
+  "visibility": "public",
+  "generatedAt": "2026-10-09T09:10:57.147Z",
+  "stats": {
+    "total": 8,
+    "day": 0,
+    "week": 0,
+    "month": 0
+  },
+  "partial": {
+    "day": true,
+    "week": true,
+    "month": true
+  },
+  "snapshots": {
+    "windowDays": 180,
+    "count": 1,
+    "firstDate": "2026-10-09",
+    "lastDate": "2026-10-09",
+    "series": {
+      "2026-10-09": 8
+    }
+  },
+  "profile": {
+    "defaultMode": "daily",
+    "hourlyEnabled": false
+  }
+}
