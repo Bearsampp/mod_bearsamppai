@@ -1,10 +1,6 @@
 name: Package and Release Module
 
 on:
-  pull_request:
-    types: [closed]
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
@@ -16,13 +12,13 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1 (Node 24)
+        uses: actions/checkout@v7 # v7.0.1 (Node 24)
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
 
       - name: Joomla Extension Packager
-        uses: N6REJ/joomla-packager@3ef7f233e49ce7b458c28b69b6a25e8312151c84 # 2026.10.2 - fills in the update feed fields Joomla needs to match
+        uses: N6REJ/joomla-packager@2026.10.2 # 2026.10.2 - fills in the update feed fields Joomla needs to match
         id: package
         with:
           extension-name: 'mod_bearsamppai'
@@ -41,7 +37,7 @@ jobs:
           github-token: ${{ secrets.GH_PAT }}
 
       - name: Upload extension package files
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (Node 24)
+        uses: actions/upload-artifact@v7 # v7.0.1 (Node 24)
         with:
           name: mod_bearsamppai_${{ steps.package.outputs.version }}
           path: ${{ steps.package.outputs.package-path }}
