@@ -91,7 +91,7 @@ $statusChecking  = Text::_('MOD_BEARSAMPPAI_CHAT_STATUS_CHECKING');
 	data-mobile-label="<?php echo $mobileLabel ? '1' : '0'; ?>"
 	style="--mbai-x: <?php echo $offsetX; ?>px; --mbai-y: <?php echo $offsetY; ?>px; --mbai-w: <?php echo $width; ?>px; --mbai-h: <?php echo $height; ?>px;"
 	data-module-id="<?php echo (int) $module->id; ?>"
-	data-endpoint="<?php echo Uri::root(); ?>index.php?option=com_ajax&module=bearsamppai&method=ask&format=json"
+	data-endpoint="<?php echo htmlspecialchars(Uri::root(), ENT_QUOTES, 'UTF-8'); ?>index.php?option=com_ajax&module=bearsamppai&method=ask&format=json">
 	<button
 		type="button"
 		class="mod-bearsamppai__chat-toggle"
