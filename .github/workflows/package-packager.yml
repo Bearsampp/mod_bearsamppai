@@ -18,15 +18,19 @@ jobs:
           token: ${{ secrets.GH_PAT }}
 
       - name: Joomla Extension Packager
-        uses: N6REJ/joomla-packager@2026.10.2 # 2026.10.2 - fills in the update feed fields Joomla needs to match
+        uses: N6REJ/joomla-packager@2026.10.16 # 2026.10.16 - fills in the update feed fields Joomla needs to match
         id: package
         with:
           extension-name: 'mod_bearsamppai'
           extension-xml: 'mod_bearsamppai.xml'
           extension-type: 'module'
-          # Match Joomla 5 and 6 so J5.4 installs are offered the update too;
-          # only applied when updates.xml does not already declare a platform.
-          targetplatform-version: '[56]\.[0-9]+'
+          # Feed matching: Joomla silently ignores entries missing client or
+          # targetplatform. Match Joomla 5 and 6 so J5.4 installs are offered
+          # the update too; only applied when updates.xml does not already
+          # declare them.
+          extension-client: 'site'
+          targetplatform-name: 'joomla'
+          targetplatform-version: '(5|6).*'
           author: 'Bearsampp'
           copyright-holder: 'Bearsampp'
           copyright-start-year: '2026'
@@ -34,6 +38,9 @@ jobs:
           update-joomla-server: 'true'
           commit-changes: 'true'
           upload-artifact: 'false'
+          ignore-docs: 'true'
+          ignore-stats: 'true'
+          ignore-updates-xml: 'true'
           github-token: ${{ secrets.GH_PAT }}
 
       - name: Upload extension package files
