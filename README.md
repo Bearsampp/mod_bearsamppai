@@ -115,9 +115,9 @@ There is no separate item count per source. Everything published in a selected s
 
 Only published content is read, at the access level Joomla's content configuration allows. Forum content is opt-in: with `show_forum` set to No the Kunena tables are never queried, so the module has no forum dependency at all. If you switch it on and Kunena is not installed, that source is skipped and the rest of the context is unaffected.
 
-### Com_ajax fallback
+### Com_ajax helper
 
-`com_ajax` first resolves the namespaced helper through the module `HelperFactory`. If that path is unavailable it falls back to the legacy `helper.php` bridge (`ModBearsamppaiHelper::askAjax()`), which delegates to the same class — the logic stays in a single place either way.
+`com_ajax` resolves the namespaced helper through the module `HelperFactory`; the `ask` and `ping` methods are implemented by `src/Helper/BearsamppaiHelper.php`.
 
 ## Customizing the look
 
@@ -194,7 +194,6 @@ File layout:
 ```
 mod_bearsamppai/
 ├── mod_bearsamppai.xml          # Extension manifest + module parameters
-├── helper.php                   # Legacy com_ajax helper bridge
 ├── updates.xml                  # Joomla Update System feed
 ├── services/provider.php        # DI service provider
 ├── src/

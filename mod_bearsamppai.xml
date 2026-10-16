@@ -17,7 +17,6 @@
 	<files>
 		<filename>mod_bearsamppai.php</filename>
 		<folder module="mod_bearsamppai">services</folder>
-		<filename>helper.php</filename>
 		<folder>src</folder>
 		<folder>tmpl</folder>
 		<folder>media</folder>
