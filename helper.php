@@ -40,7 +40,7 @@ class ModBearsamppaiHelper
 	 *
 	 * @since   2.1.0
 	 */
-	public static function askAjax()
+	public static function askAjax(): array
 	{
 		$helper = new \Bearsampp\Module\BearsamppAI\Site\Helper\BearsamppaiHelper();
 
@@ -54,7 +54,7 @@ class ModBearsamppaiHelper
 	 *
 	 * @since   2.2.0
 	 */
-	public static function pingAjax()
+	public static function pingAjax(): array
 	{
 		$helper = new \Bearsampp\Module\BearsamppAI\Site\Helper\BearsamppaiHelper();
 
