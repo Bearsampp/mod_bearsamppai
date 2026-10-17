@@ -53,8 +53,8 @@ See [Choosing the knowledge base content](#choosing-the-knowledge-base-content) 
 | --- | --- |
 | Show AI chat widget | Enable the floating chat widget. |
 | AI API key | API key for the AI service. With the default endpoint this is an OpenCode Zen key. Read on the server only; never sent to the browser. |
-| AI model | Model to use, e.g. `glm-5.3-flash` (default). |
-| Fallback model | Tried once if the primary request times out, is rate limited (HTTP 429) or returns a server error (HTTP 5xx); defaults to `deepseek-v4-flash`. Leave blank to disable. |
+| AI model | Select from the dropdown; built-in options show OpenCode Console's per-1M-token input/output prices and identify free options. Rates apply only to the default endpoint and can change. Custom model prices depend on the configured provider. |
+| Fallback model | Tried once if the primary request times out, is rate limited (HTTP 429) or returns a server error (HTTP 5xx); defaults to `deepseek-v4.1-flash` ($0.30 input / $1.20 output per 1M tokens on OpenCode Console). Leave blank to disable. |
 | AI endpoint | OpenAI-compatible chat completions endpoint (defaults to OpenCode Zen). |
 | Max response tokens | 64–4096, default 512. |
 | Temperature | 0–1, default 0.2 (low = factual answers). |
