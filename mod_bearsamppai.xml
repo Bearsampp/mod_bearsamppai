@@ -29,7 +29,7 @@
 		<server type="extension" priority="1" name="Bearsampp AI Updates">https://raw.githubusercontent.com/Bearsampp/mod_bearsamppai/main/updates.xml</server>
 	</updateservers>
 	<config>
-		<fields name="params">
+		<fields name="params" addfieldprefix="Bearsampp\Module\BearsamppAI\Field">
 			<fieldset name="content" label="MOD_BEARSAMPPAI_FIELDSET_CONTENT_LABEL" description="MOD_BEARSAMPPAI_FIELDSET_CONTENT_DESC">
 				<field
 					name="articles_category_id"
@@ -77,7 +77,7 @@
 
 				<field
 					name="ai_model"
-					type="text"
+					type="aimodel"
 					label="MOD_BEARSAMPPAI_FIELD_AI_MODEL_LABEL"
 					description="MOD_BEARSAMPPAI_FIELD_AI_MODEL_DESC"
 					default="glm-5.3-flash"
@@ -96,7 +96,16 @@
 					<option value="kimi-k2.6" />
 					<option value="kimi-k2.5" />
 					<option value="qwen3.8-max" />
+					<option value="__custom__">MOD_BEARSAMPPAI_FIELD_AI_MODEL_CUSTOM</option>
 				</field>
+
+				<field
+					name="ai_custom_model"
+					type="text"
+					label="MOD_BEARSAMPPAI_FIELD_AI_CUSTOM_MODEL_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_AI_CUSTOM_MODEL_DESC"
+					showon="ai_model:__custom__"
+				/>
 
 				<field
 					name="ai_fallback_model"

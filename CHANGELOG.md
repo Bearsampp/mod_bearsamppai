@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+* Replace the model text suggestions with a visible dropdown and an explicit custom-model field, preserving existing custom IDs.
+
 ## [2026.10.17.1] - 2026-10-17
 
 ### Fixed
@@ -22,4 +28,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Update version to 2026.10.16.3 [skip ci] ([cae8529](https://github.com/Bearsampp/mod_bearsamppai/commit/cae8529))
 * Migrate to OpenCode inference endpoint and update default model to deepseek-v4.1-flash ([8c9240e](https://github.com/Bearsampp/mod_bearsamppai/commit/8c9240e))
 * Merge remote-tracking branch 'origin/main' ([a5619aa](https://github.com/Bearsampp/mod_bearsamppai/commit/a5619aa))
-
