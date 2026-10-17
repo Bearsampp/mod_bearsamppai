@@ -207,11 +207,12 @@ class BearsamppaiHelper
 			return ['success' => false, 'error' => 'Empty message'];
 		}
 
-		$apiKey        = trim((string) $params->get('ai_api_key', ''));
-		$model         = trim((string) $params->get('ai_model', self::DEFAULT_MODEL));
-		$customModel   = trim((string) $params->get('ai_custom_model', ''));
-		$fallbackModel = trim((string) $params->get('ai_fallback_model', self::DEFAULT_FALLBACK_MODEL));
-		$endpoint      = trim((string) $params->get('ai_endpoint', self::DEFAULT_ENDPOINT));
+		$apiKey              = trim((string) $params->get('ai_api_key', ''));
+		$model               = trim((string) $params->get('ai_model', self::DEFAULT_MODEL));
+		$customModel         = trim((string) $params->get('ai_custom_model', ''));
+		$fallbackModel       = trim((string) $params->get('ai_fallback_model', self::DEFAULT_FALLBACK_MODEL));
+		$customFallbackModel = trim((string) $params->get('ai_custom_fallback_model', ''));
+		$endpoint            = trim((string) $params->get('ai_endpoint', self::DEFAULT_ENDPOINT));
 
 		if ($model === '__custom__') {
 			$model = $customModel;
@@ -219,6 +220,10 @@ class BearsamppaiHelper
 
 		if ($fallbackModel === self::LEGACY_DEFAULT_FALLBACK_MODEL) {
 			$fallbackModel = self::DEFAULT_FALLBACK_MODEL;
+		}
+
+		if ($fallbackModel === '__custom__') {
+			$fallbackModel = $customFallbackModel;
 		}
 
 		if (rtrim($endpoint, '/') === self::LEGACY_DEFAULT_ENDPOINT) {
