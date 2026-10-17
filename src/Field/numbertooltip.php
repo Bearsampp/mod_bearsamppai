@@ -29,20 +29,17 @@ class JFormFieldNumbertooltip extends NumberField
 			return $label;
 		}
 
-		HTMLHelper::_('bootstrap.popover', '.hasPopover');
+		HTMLHelper::_('bootstrap.tooltip', '.hasTooltip');
 
 		$description = $this->translateDescription ? Text::_($this->description) : $this->description;
 		$escapedDescription = htmlspecialchars($description, ENT_QUOTES, 'UTF-8');
-		$labelText = $this->translateLabel ? Text::_((string) $this->element['label']) : (string) $this->element['label'];
-		$escapedLabel = htmlspecialchars($labelText, ENT_QUOTES, 'UTF-8');
-		$popover = '<button type="button" class="btn btn-link btn-sm hasPopover p-0 ms-1"'
-			. ' aria-label="' . $escapedLabel . '"'
-			. ' title="' . $escapedLabel . '"'
-			. ' data-bs-toggle="popover"'
-			. ' data-bs-content="' . $escapedDescription . '">'
+		$tooltip = '<button type="button" class="btn btn-link btn-sm hasTooltip p-0 ms-1"'
+			. ' aria-label="' . $escapedDescription . '"'
+			. ' title="' . $escapedDescription . '"'
+			. ' data-bs-toggle="tooltip">'
 			. '<span class="icon-info-circle" aria-hidden="true"></span>'
 			. '</button>';
 
-		return str_replace('</label>', '</label>' . $popover, $label);
+		return str_replace('</label>', '</label>' . $tooltip, $label);
 	}
 }
