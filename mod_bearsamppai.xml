@@ -150,10 +150,9 @@
 
 				<field
 					name="max_response_tokens"
-					type="numbertooltip"
+					type="number"
 					label="MOD_BEARSAMPPAI_FIELD_MAX_TOKENS_LABEL"
 					description="MOD_BEARSAMPPAI_FIELD_MAX_TOKENS_DESC"
-					hiddenDescription="true"
 					default="2048"
 					filter="integer"
 					min="64"
