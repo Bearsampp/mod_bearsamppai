@@ -5,28 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Changed
-
-* Remove OpenCode app-only free-tier models from the API model selectors.
-* Show the allowed 64–4096 token range and default beside the max response tokens setting.
-
-### Fixed
-
-* Explain when a previously saved OpenCode free-tier model cannot be used through the API.
-
-## [2026.10.17.4] - 2026-10-17
+## [2026.10.17.6] - 2026-10-17
 
 ### Added
 
-* Add priced model dropdown for fallback ([2a057f3](https://github.com/Bearsampp/mod_bearsamppai/commit/2a057f3))
+* Add field descriptions for module configuration parameters ([9542f65](https://github.com/Bearsampp/mod_bearsamppai/commit/9542f65))
 
 ### Changed
 
-* Update version to 2026.10.17.2 [skip ci] ([c343786](https://github.com/Bearsampp/mod_bearsamppai/commit/c343786))
-* Update version to 2026.10.17.3 [skip ci] ([5a40342](https://github.com/Bearsampp/mod_bearsamppai/commit/5a40342))
+* Update version to 2026.10.17.4 [skip ci] ([fd2eae0](https://github.com/Bearsampp/mod_bearsamppai/commit/fd2eae0))
+* Update version to 2026.10.17.5 [skip ci] ([8596f8a](https://github.com/Bearsampp/mod_bearsamppai/commit/8596f8a))
+* Use Joomla Packager with release ZIP checksums ([7489831](https://github.com/Bearsampp/mod_bearsamppai/commit/7489831))
+* Update version to 2026.10.17.5 [skip ci] ([9c944dc](https://github.com/Bearsampp/mod_bearsamppai/commit/9c944dc))
+* Pin packager feed metadata fix ([15bd550](https://github.com/Bearsampp/mod_bearsamppai/commit/15bd550))
+* Pin packager inline checksum fix ([379131a](https://github.com/Bearsampp/mod_bearsamppai/commit/379131a))
+* Merge remote-tracking branch 'origin/main' ([16c90f6](https://github.com/Bearsampp/mod_bearsamppai/commit/16c90f6))
 
-### Fixed
+### Removed
 
-* Fix Joomla model dropdown field loading ([2f09358](https://github.com/Bearsampp/mod_bearsamppai/commit/2f09358))
+* Remove OpenCode app-only free models from API choices ([7a14195](https://github.com/Bearsampp/mod_bearsamppai/commit/7a14195))
+
