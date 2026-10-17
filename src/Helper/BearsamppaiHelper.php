@@ -97,6 +97,14 @@ class BearsamppaiHelper
 	private const LEGACY_DEFAULT_FALLBACK_MODEL = 'deepseek-v4-flash';
 
 	/**
+	 * Previous default response-token limit, migrated to the larger current default.
+	 *
+	 * @var int
+	 * @since 2.4.2
+	 */
+	private const LEGACY_DEFAULT_MAX_RESPONSE_TOKENS = 512;
+
+	/**
 	 * Separator inserted between knowledge context parts. Charged against the
 	 * context limit so the configured maximum is the maximum actually sent.
 	 *
@@ -284,9 +292,16 @@ class BearsamppaiHelper
 			. "7. Content is grouped by source. 'FAQ question' is a visitor question and the 'FAQ answer' that follows is the approved answer - match on meaning, not wording." . "\n"
 			. "8. Prefer the most specific source. A page written about one thing beats a list, index or release note that merely mentions it." . "\n"
 			. "9. If two sources conflict, the FAQ answer wins. Never combine an FAQ answer with a contradicting article." . "\n"
+			. "10. Be concise and answer only what the visitor asked. Do not add unrelated advice or lists; use a few sentences unless detail is requested." . "\n"
 			. "\n"
 			. "Knowledge base context follows between <kb> tags." . "\n"
 			. "<kb>" . $context . '</kb>';
+
+		$maxResponseTokens = (int) $params->get('max_response_tokens', 2048);
+
+		if ($maxResponseTokens === self::LEGACY_DEFAULT_MAX_RESPONSE_TOKENS) {
+			$maxResponseTokens = 2048;
+		}
 
 		$payload = [
 			'model'       => $model,
@@ -294,7 +309,7 @@ class BearsamppaiHelper
 				['role' => 'system', 'content' => $systemPrompt],
 				['role' => 'user',   'content' => $message],
 			],
-			'max_tokens'  => (int) $params->get('max_response_tokens', 512),
+			'max_tokens'  => $maxResponseTokens,
 			'temperature' => (float) $params->get('temperature', 0.2),
 		];
 
@@ -404,13 +419,42 @@ class BearsamppaiHelper
 				];
 			}
 
-			$data   = json_decode((string) $response->body, true);
-			$answer = is_array($data) ? $this->extractAssistantContent($data) : null;
+			$data         = json_decode((string) $response->body, true);
+			$answer       = is_array($data) ? $this->extractAssistantContent($data) : null;
+			$responseModel = (string) $payload['model'];
+
+			if (
+				($answer === null || $answer === '')
+				&& !$fallbackAttempted
+				&& $fallbackModel !== ''
+				&& $fallbackModel !== $model
+			) {
+				$fallbackAttempted = true;
+				$responseModel     = $fallbackModel;
+				$this->logFallbackAttempt($model, $fallbackModel, 'empty assistant response');
+				$payload['model'] = $fallbackModel;
+				$response         = $http->post($endpoint, json_encode($payload), $headers, $fallbackTimeout);
+
+				if ($response->code < 200 || $response->code >= 300) {
+					$this->logNotice('AI fallback request after empty response failed with HTTP ' . $response->code);
+
+					return [
+						'success' => false,
+						'error'   => 'The AI service returned no answer and its fallback request failed (status ' . $response->code . ').',
+					];
+				}
+
+				$data   = json_decode((string) $response->body, true);
+				$answer = is_array($data) ? $this->extractAssistantContent($data) : null;
+			}
 
 			if ($answer === null || $answer === '') {
 				$choice      = is_array($data) ? ($data['choices'][0] ?? null) : null;
 				$message     = is_array($choice) ? ($choice['message'] ?? null) : null;
 				$contentType = is_array($message) ? get_debug_type($message['content'] ?? null) : 'missing';
+				$finishReason = is_array($choice) && is_string($choice['finish_reason'] ?? null)
+					? $choice['finish_reason']
+					: 'missing';
 				$apiError    = is_array($data) ? ($data['error'] ?? null) : null;
 
 				if (is_array($apiError)) {
@@ -420,7 +464,11 @@ class BearsamppaiHelper
 				$this->logNotice(
 					'Unexpected AI API response: HTTP ' . $response->code
 					. ' topLevelKeys=' . (is_array($data) ? implode(',', array_keys($data)) : 'invalid-json')
+					. ' choiceKeys=' . (is_array($choice) ? implode(',', array_keys($choice)) : 'missing')
+					. ' messageKeys=' . (is_array($message) ? implode(',', array_keys($message)) : 'missing')
 					. ' contentType=' . $contentType
+					. ' finishReason=' . $finishReason
+					. ' model=' . $responseModel
 					. ' responseBytes=' . strlen((string) $response->body)
 				);
 
@@ -428,12 +476,15 @@ class BearsamppaiHelper
 					return ['success' => false, 'error' => 'AI API error: ' . trim($apiError)];
 				}
 
-				return ['success' => false, 'error' => 'Unexpected response from the AI API'];
+				return [
+					'success' => false,
+					'error'   => 'The AI API returned no assistant text (finish reason: ' . $finishReason . ').',
+				];
 			}
 
 		$this->logNotice(
 			'KB answer: chars=' . mb_strlen($context)
-			. ' model=' . $model
+			. ' model=' . $responseModel
 			. ' fallback=' . ($fallbackAttempted ? 'yes' : 'no')
 			. ' noData=' . ($answer === $noData ? 'yes' : 'no')
 			. ' order=' . $order
