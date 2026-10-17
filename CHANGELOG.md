@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+* Remove OpenCode app-only free-tier models from the API model selectors.
+
+### Fixed
+
+* Explain when a previously saved OpenCode free-tier model cannot be used through the API.
+
 ## [2026.10.17.4] - 2026-10-17
 
 ### Added
@@ -19,4 +29,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 * Fix Joomla model dropdown field loading ([2f09358](https://github.com/Bearsampp/mod_bearsamppai/commit/2f09358))
-

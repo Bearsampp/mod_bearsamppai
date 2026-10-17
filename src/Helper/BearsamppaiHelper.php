@@ -56,6 +56,17 @@ use Joomla\Utilities\ArrayHelper;
 class BearsamppaiHelper
 {
 	/**
+	 * OpenCode free-tier model IDs that cannot be used through the inference API.
+	 *
+	 * @var string[]
+	 * @since  2.4.6
+	 */
+	private const OPENCODE_APP_ONLY_MODELS = [
+		'glm-5.3-flash-free',
+		'deepseek-v4.1-flash-free',
+	];
+
+	/**
 	 * Default OpenAI-compatible endpoint (OpenCode Zen).
 	 *
 	 * @var string
@@ -228,6 +239,26 @@ class BearsamppaiHelper
 
 		if (rtrim($endpoint, '/') === self::LEGACY_DEFAULT_ENDPOINT) {
 			$endpoint = self::DEFAULT_ENDPOINT;
+		}
+
+		if (
+			parse_url($endpoint, PHP_URL_HOST) === 'opencode.ai'
+			&& in_array($model, self::OPENCODE_APP_ONLY_MODELS, true)
+		) {
+			return [
+				'success' => false,
+				'error'   => 'Model ' . $model . ' is restricted to the OpenCode application and cannot be used through the OpenCode API. Select a paid API model.',
+			];
+		}
+
+		if (
+			parse_url($endpoint, PHP_URL_HOST) === 'opencode.ai'
+			&& in_array($fallbackModel, self::OPENCODE_APP_ONLY_MODELS, true)
+		) {
+			return [
+				'success' => false,
+				'error'   => 'Fallback model ' . $fallbackModel . ' is restricted to the OpenCode application and cannot be used through the OpenCode API. Select a paid API model or disable the fallback.',
+			];
 		}
 
 		$missing = [];

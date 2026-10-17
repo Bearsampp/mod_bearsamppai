@@ -25,6 +25,17 @@ use Joomla\CMS\Language\Text;
 class JFormFieldAimodel extends ListField
 {
 	/**
+	 * Free-tier models that OpenCode only permits inside its own application.
+	 *
+	 * @var string[]
+	 * @since  2.4.6
+	 */
+	private const OPENCODE_APP_ONLY_MODELS = [
+		'glm-5.3-flash-free',
+		'deepseek-v4.1-flash-free',
+	];
+
+	/**
 	 * OpenCode Console prices per 1M input/output tokens, verified 2026-10-17.
 	 *
 	 * @var array<string, array{0: string, 1: string}>
@@ -32,13 +43,11 @@ class JFormFieldAimodel extends ListField
 	 */
 	private const MODEL_PRICING = [
 		'glm-5.3-flash' => ['GLM 5.3 Flash', 'Paid: $0.15 input / $0.50 output'],
-		'glm-5.3-flash-free' => ['GLM 5.3 Flash Free', 'Free'],
 		'glm-5.3' => ['GLM 5.3', 'Paid: $1.40 input / $4.40 output'],
 		'glm-5.2' => ['GLM 5.2', 'Paid: $1.40 input / $4.40 output'],
 		'glm-5.1' => ['GLM 5.1', 'Paid: $1.40 input / $4.40 output'],
 		'glm-5' => ['GLM 5', 'Paid: $1.00 input / $3.20 output'],
 		'deepseek-v4.1-flash' => ['DeepSeek V4.1 Flash', 'Paid: $0.30 input / $1.20 output'],
-		'deepseek-v4.1-flash-free' => ['DeepSeek V4.1 Flash Free', 'Free'],
 		'deepseek-v4-pro' => ['DeepSeek V4 Pro', 'Paid: $1.74 input / $3.48 output'],
 		'minimax-m3' => ['MiniMax M3', 'Paid: $0.30 input / $1.20 output'],
 		'minimax-m2.7' => ['MiniMax M2.7', 'Paid: $0.30 input / $1.20 output'],
@@ -79,6 +88,16 @@ class JFormFieldAimodel extends ListField
 		}
 
 		if ($value === '' || $value === '__custom__') {
+			return $options;
+		}
+
+		if (in_array($value, self::OPENCODE_APP_ONLY_MODELS, true)) {
+			$options[] = HTMLHelper::_(
+				'select.option',
+				$value,
+				Text::_('MOD_BEARSAMPPAI_FIELD_AI_MODEL_UNAVAILABLE') . ' (' . $value . ')'
+			);
+
 			return $options;
 		}
 

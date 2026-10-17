@@ -83,13 +83,11 @@
 					default="glm-5.3-flash"
 					>
 					<option value="glm-5.3-flash" />
-					<option value="glm-5.3-flash-free" />
 					<option value="glm-5.3" />
 					<option value="glm-5.2" />
 					<option value="glm-5.1" />
 					<option value="glm-5" />
 					<option value="deepseek-v4.1-flash" />
-					<option value="deepseek-v4.1-flash-free" />
 					<option value="deepseek-v4-pro" />
 					<option value="minimax-m3" />
 					<option value="minimax-m2.7" />
@@ -118,13 +116,11 @@
 					>
 					<option value="">MOD_BEARSAMPPAI_FIELD_AI_FALLBACK_DISABLED</option>
 					<option value="glm-5.3-flash" />
-					<option value="glm-5.3-flash-free" />
 					<option value="glm-5.3" />
 					<option value="glm-5.2" />
 					<option value="glm-5.1" />
 					<option value="glm-5" />
 					<option value="deepseek-v4.1-flash" />
-					<option value="deepseek-v4.1-flash-free" />
 					<option value="deepseek-v4-pro" />
 					<option value="minimax-m3" />
 					<option value="minimax-m2.7" />
