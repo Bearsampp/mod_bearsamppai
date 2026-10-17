@@ -18,7 +18,7 @@ jobs:
           token: ${{ secrets.GH_PAT }}
 
       - name: Joomla Extension Packager
-        uses: N6REJ/joomla-packager@2026.10.16 # 2026.10.16 - fills in the update feed fields Joomla needs to match
+        uses: N6REJ/joomla-packager@2026.10.17.2 # 2026.10.17.2 - fixes inline SHA-256 cleanup to preserve feed XML
         id: package
         with:
           extension-name: 'mod_bearsamppai'
