@@ -29,7 +29,7 @@
 		<server type="extension" priority="1" name="Bearsampp AI Updates">https://raw.githubusercontent.com/Bearsampp/mod_bearsamppai/main/updates.xml</server>
 	</updateservers>
 	<config>
-		<fields name="params" addfieldprefix="Bearsampp\Module\BearsamppAI\Field">
+		<fields name="params" addfieldpath="modules/mod_bearsamppai/src/Field">
 			<fieldset name="content" label="MOD_BEARSAMPPAI_FIELDSET_CONTENT_LABEL" description="MOD_BEARSAMPPAI_FIELDSET_CONTENT_DESC">
 				<field
 					name="articles_category_id"
