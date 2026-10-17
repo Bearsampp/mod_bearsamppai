@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.10.16.4] - 2026-10-16
+
+### Changed
+
+* Offer common OpenCode model IDs as model-field suggestions while retaining support for custom provider model IDs.
+
+## [2026.10.16.3] - 2026-10-16
+
+### Fixed
+
+* Use the current OpenCode chat-completions endpoint, migrate existing instances using the previous default, and parse Responses API output text.
+
 ## [2026.10.16.2] - 2026-10-16
 
 ### Changed
@@ -20,4 +32,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Remove updates.xml file ([830bbc5](https://github.com/Bearsampp/mod_bearsamppai/commit/830bbc5))
 * Remove legacy com_ajax helper bridge ([35c5912](https://github.com/Bearsampp/mod_bearsamppai/commit/35c5912))
-

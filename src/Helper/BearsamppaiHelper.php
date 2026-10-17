@@ -61,7 +61,15 @@ class BearsamppaiHelper
 	 * @var string
 	 * @since 2.1.0
 	 */
-	private const DEFAULT_ENDPOINT = 'https://opencode.ai/zen/v1/chat/completions';
+	private const DEFAULT_ENDPOINT = 'https://opencode.ai/inference/openai/v1/chat/completions';
+
+	/**
+	 * Legacy default endpoint migrated transparently for existing module instances.
+	 *
+	 * @var string
+	 * @since 2.4.1
+	 */
+	private const LEGACY_DEFAULT_ENDPOINT = 'https://opencode.ai/zen/v1/chat/completions';
 
 	/**
 	 * Default model name.
@@ -78,7 +86,15 @@ class BearsamppaiHelper
 	 * @var string
 	 * @since 2.3.0
 	 */
-	private const DEFAULT_FALLBACK_MODEL = 'deepseek-v4-flash';
+	private const DEFAULT_FALLBACK_MODEL = 'deepseek-v4.1-flash';
+
+	/**
+	 * Legacy default fallback model migrated for existing module instances.
+	 *
+	 * @var string
+	 * @since 2.4.1
+	 */
+	private const LEGACY_DEFAULT_FALLBACK_MODEL = 'deepseek-v4-flash';
 
 	/**
 	 * Separator inserted between knowledge context parts. Charged against the
@@ -187,6 +203,14 @@ class BearsamppaiHelper
 		$model         = trim((string) $params->get('ai_model', self::DEFAULT_MODEL));
 		$fallbackModel = trim((string) $params->get('ai_fallback_model', self::DEFAULT_FALLBACK_MODEL));
 		$endpoint      = trim((string) $params->get('ai_endpoint', self::DEFAULT_ENDPOINT));
+
+		if ($fallbackModel === self::LEGACY_DEFAULT_FALLBACK_MODEL) {
+			$fallbackModel = self::DEFAULT_FALLBACK_MODEL;
+		}
+
+		if (rtrim($endpoint, '/') === self::LEGACY_DEFAULT_ENDPOINT) {
+			$endpoint = self::DEFAULT_ENDPOINT;
+		}
 
 		$missing = [];
 
@@ -486,6 +510,41 @@ class BearsamppaiHelper
 
 		if (is_string($outputText) && trim($outputText) !== '') {
 			return trim($outputText);
+		}
+
+		$output = $data['output'] ?? null;
+
+		if (is_array($output)) {
+			$text = '';
+
+			foreach ($output as $item) {
+				if (!is_array($item)) {
+					continue;
+				}
+
+				$content = $item['content'] ?? null;
+
+				if (is_string($content)) {
+					$text .= $content;
+					continue;
+				}
+
+				if (!is_array($content)) {
+					continue;
+				}
+
+				foreach ($content as $part) {
+					if (is_string($part)) {
+						$text .= $part;
+					} elseif (is_array($part) && is_string($part['text'] ?? null)) {
+						$text .= $part['text'];
+					}
+				}
+			}
+
+			if (trim($text) !== '') {
+				return trim($text);
+			}
 		}
 
 		return null;

@@ -7,7 +7,7 @@
 	<license>GNU General Public License version 3; see LICENSE</license>
 	<authorEmail>support@bearsampp.com</authorEmail>
 	<authorUrl>https://bearsampp.com</authorUrl>
-	<version>2026.10.16.2</version>
+	<version>2026.10.16.4</version>
 	<description>MOD_BEARSAMPPAI_XML_DESCRIPTION</description>
 	<namespace path="src">Bearsampp\Module\BearsamppAI</namespace>
 	<dependencies>
@@ -81,14 +81,29 @@
 					label="MOD_BEARSAMPPAI_FIELD_AI_MODEL_LABEL"
 					description="MOD_BEARSAMPPAI_FIELD_AI_MODEL_DESC"
 					default="glm-5.3-flash"
-				/>
+					>
+					<option value="glm-5.3-flash" />
+					<option value="glm-5.3" />
+					<option value="glm-5.2" />
+					<option value="glm-5.1" />
+					<option value="glm-5" />
+					<option value="deepseek-v4.1-flash" />
+					<option value="deepseek-v4-pro" />
+					<option value="minimax-m3" />
+					<option value="minimax-m2.7" />
+					<option value="kimi-k3" />
+					<option value="kimi-k2.7-code" />
+					<option value="kimi-k2.6" />
+					<option value="kimi-k2.5" />
+					<option value="qwen3.8-max" />
+				</field>
 
 				<field
 					name="ai_fallback_model"
 					type="text"
 					label="MOD_BEARSAMPPAI_FIELD_AI_FALLBACK_MODEL_LABEL"
 					description="MOD_BEARSAMPPAI_FIELD_AI_FALLBACK_MODEL_DESC"
-					default="deepseek-v4-flash"
+					default="deepseek-v4.1-flash"
 				/>
 
 				<field
@@ -96,7 +111,7 @@
 					type="text"
 					label="MOD_BEARSAMPPAI_FIELD_AI_ENDPOINT_LABEL"
 					description="MOD_BEARSAMPPAI_FIELD_AI_ENDPOINT_DESC"
-					default="https://opencode.ai/zen/v1/chat/completions"
+					default="https://opencode.ai/inference/openai/v1/chat/completions"
 				/>
 
 				<field
