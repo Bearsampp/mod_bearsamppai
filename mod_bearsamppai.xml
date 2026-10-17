@@ -152,6 +152,8 @@
 					name="max_response_tokens"
 					type="number"
 					label="MOD_BEARSAMPPAI_FIELD_MAX_TOKENS_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_MAX_TOKENS_DESC"
+					hiddenDescription="true"
 					default="2048"
 					filter="integer"
 					min="64"
@@ -163,6 +165,7 @@
 					name="temperature"
 					type="number"
 					label="MOD_BEARSAMPPAI_FIELD_TEMPERATURE_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_TEMPERATURE_DESC"
 					default="0.2"
 					filter="float"
 					min="0"
@@ -175,6 +178,7 @@
 					name="request_timeout"
 					type="number"
 					label="MOD_BEARSAMPPAI_FIELD_TIMEOUT_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_TIMEOUT_DESC"
 					default="30"
 					filter="integer"
 					min="5"
@@ -236,6 +240,7 @@
 					name="chat_heading"
 					type="text"
 					label="MOD_BEARSAMPPAI_FIELD_CHAT_HEADING_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CHAT_HEADING_DESC"
 					default="Ask Bearsampp"
 				/>
 
@@ -243,6 +248,7 @@
 					name="chat_placeholder"
 					type="text"
 					label="MOD_BEARSAMPPAI_FIELD_CHAT_PLACEHOLDER_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CHAT_PLACEHOLDER_DESC"
 					default="Ask a question about Bearsampp..."
 				/>
 
@@ -273,6 +279,7 @@
 					name="chat_width"
 					type="number"
 					label="MOD_BEARSAMPPAI_FIELD_CHAT_WIDTH_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CHAT_WIDTH_DESC"
 					default="400"
 					filter="integer"
 					min="260"
@@ -284,6 +291,7 @@
 					name="chat_height"
 					type="number"
 					label="MOD_BEARSAMPPAI_FIELD_CHAT_HEIGHT_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CHAT_HEIGHT_DESC"
 					default="500"
 					filter="integer"
 					min="300"
@@ -380,6 +388,7 @@
 					name="chat_status_interval"
 					type="number"
 					label="MOD_BEARSAMPPAI_FIELD_CHAT_STATUS_INTERVAL_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CHAT_STATUS_INTERVAL_DESC"
 					default="30"
 					filter="integer"
 					min="10"
@@ -393,6 +402,7 @@
 					name="layout"
 					type="modulelayout"
 					label="JFIELD_ALT_LAYOUT_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_LAYOUT_DESC"
 					class="form-select"
 					validate="moduleLayout"
 				/>
@@ -401,6 +411,7 @@
 					name="moduleclass_sfx"
 					type="textarea"
 					label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_MODULECLASS_SFX_DESC"
 					rows="3"
 					validate="CssIdentifier"
 				/>
@@ -409,6 +420,7 @@
 					name="cache"
 					type="list"
 					label="COM_MODULES_FIELD_CACHING_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CACHE_DESC"
 					default="1"
 					filter="integer"
 					validate="options"
@@ -421,6 +433,7 @@
 					name="cache_time"
 					type="number"
 					label="COM_MODULES_FIELD_CACHE_TIME_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_CACHE_TIME_DESC"
 					default="900"
 					filter="integer"
 				/>

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Remove OpenCode app-only free-tier models from the API model selectors.
+* Show the allowed 64–4096 token range and default beside the max response tokens setting.
 
 ### Fixed
 
