@@ -380,13 +380,32 @@ class BearsamppaiHelper
 				];
 			}
 
-			$data = json_decode((string) $response->body, true);
+			$data   = json_decode((string) $response->body, true);
+			$answer = is_array($data) ? $this->extractAssistantContent($data) : null;
 
-			if (!is_array($data) || empty($data['choices'][0]['message']['content'])) {
+			if ($answer === null || $answer === '') {
+				$choice      = is_array($data) ? ($data['choices'][0] ?? null) : null;
+				$message     = is_array($choice) ? ($choice['message'] ?? null) : null;
+				$contentType = is_array($message) ? get_debug_type($message['content'] ?? null) : 'missing';
+				$apiError    = is_array($data) ? ($data['error'] ?? null) : null;
+
+				if (is_array($apiError)) {
+					$apiError = $apiError['message'] ?? null;
+				}
+
+				$this->logNotice(
+					'Unexpected AI API response: HTTP ' . $response->code
+					. ' topLevelKeys=' . (is_array($data) ? implode(',', array_keys($data)) : 'invalid-json')
+					. ' contentType=' . $contentType
+					. ' responseBytes=' . strlen((string) $response->body)
+				);
+
+				if (is_string($apiError) && trim($apiError) !== '') {
+					return ['success' => false, 'error' => 'AI API error: ' . trim($apiError)];
+				}
+
 				return ['success' => false, 'error' => 'Unexpected response from the AI API'];
 			}
-
-$answer = trim((string) $data['choices'][0]['message']['content']);
 
 		$this->logNotice(
 			'KB answer: chars=' . mb_strlen($context)
@@ -412,6 +431,64 @@ $answer = trim((string) $data['choices'][0]['message']['content']);
 
 			return ['success' => false, 'error' => $e->getMessage()];
 		}
+	}
+
+	/**
+	 * Extract assistant text from common OpenAI-compatible response shapes.
+	 *
+	 * @param   array  $data  The decoded API response.
+	 *
+	 * @return  ?string  The assistant text, or null when no text is present.
+	 *
+	 * @since   2.4.1
+	 */
+	private function extractAssistantContent(array $data): ?string
+	{
+		$message = $data['choices'][0]['message'] ?? null;
+
+		if (is_array($message)) {
+			$content = $message['content'] ?? null;
+
+			if (is_string($content)) {
+				return trim($content);
+			}
+
+			if (is_array($content)) {
+				$text = '';
+
+				foreach ($content as $part) {
+					if (is_string($part)) {
+						$text .= $part;
+					} elseif (is_array($part) && is_string($part['text'] ?? null)) {
+						$text .= $part['text'];
+					}
+				}
+
+				if (trim($text) !== '') {
+					return trim($text);
+				}
+			}
+
+			$refusal = $message['refusal'] ?? null;
+
+			if (is_string($refusal) && trim($refusal) !== '') {
+				return trim($refusal);
+			}
+		}
+
+		$legacyText = $data['choices'][0]['text'] ?? null;
+
+		if (is_string($legacyText) && trim($legacyText) !== '') {
+			return trim($legacyText);
+		}
+
+		$outputText = $data['output_text'] ?? null;
+
+		if (is_string($outputText) && trim($outputText) !== '') {
+			return trim($outputText);
+		}
+
+		return null;
 	}
 
 	/**
