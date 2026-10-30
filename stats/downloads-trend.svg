@@ -19,30 +19,31 @@
   </defs>
   <rect class="bg" x="0" y="0" width="1000" height="360" rx="16" />
   <text class="title" x="64" y="34">Bearsampp/mod_bearsamppai release downloads</text>
-  <text class="sub" x="64" y="352">Generated 2026-10-29</text>
+  <text class="sub" x="64" y="352">Generated 2026-10-30</text>
   <line x1="64" y1="52.00" x2="976" y2="52.00" class="grid"/>
-  <text x="56" y="56.00" text-anchor="end" class="axis">78</text>
+  <text x="56" y="56.00" text-anchor="end" class="axis">79</text>
   <line x1="64" y1="94.00" x2="976" y2="94.00" class="grid"/>
-  <text x="56" y="98.00" text-anchor="end" class="axis">65</text>
+  <text x="56" y="98.00" text-anchor="end" class="axis">66</text>
   <line x1="64" y1="136.00" x2="976" y2="136.00" class="grid"/>
-  <text x="56" y="140.00" text-anchor="end" class="axis">52</text>
+  <text x="56" y="140.00" text-anchor="end" class="axis">53</text>
   <line x1="64" y1="178.00" x2="976" y2="178.00" class="grid"/>
-  <text x="56" y="182.00" text-anchor="end" class="axis">39</text>
+  <text x="56" y="182.00" text-anchor="end" class="axis">40</text>
   <line x1="64" y1="220.00" x2="976" y2="220.00" class="grid"/>
   <text x="56" y="224.00" text-anchor="end" class="axis">26</text>
   <line x1="64" y1="262.00" x2="976" y2="262.00" class="grid"/>
   <text x="56" y="266.00" text-anchor="end" class="axis">13</text>
   <line x1="64" y1="304.00" x2="976" y2="304.00" class="grid"/>
   <text x="56" y="308.00" text-anchor="end" class="axis">0</text>
-  <path d="M 64.00 304 L 64.00 278.15 L 109.60 291.08 L 155.20 291.08 L 200.80 291.08 L 246.40 291.08 L 292.00 291.08 L 337.60 291.08 L 383.20 284.62 L 428.80 271.69 L 474.40 223.23 L 520.00 223.23 L 565.60 213.54 L 611.20 161.85 L 656.80 155.38 L 702.40 155.38 L 748.00 155.38 L 793.60 155.38 L 839.20 103.69 L 884.80 103.69 L 930.40 103.69 L 976.00 52.00 L 976.00 304 Z" fill="url(#fill-total-trend-black)"/>
-  <polyline class="line" points="64.00,278.15 109.60,291.08 155.20,291.08 200.80,291.08 246.40,291.08 292.00,291.08 337.60,291.08 383.20,284.62 428.80,271.69 474.40,223.23 520.00,223.23 565.60,213.54 611.20,161.85 656.80,155.38 702.40,155.38 748.00,155.38 793.60,155.38 839.20,103.69 884.80,103.69 930.40,103.69 976.00,52.00"/>
+  <path d="M 64.00 304 L 64.00 278.48 L 107.43 291.24 L 150.86 291.24 L 194.29 291.24 L 237.71 291.24 L 281.14 291.24 L 324.57 291.24 L 368.00 284.86 L 411.43 272.10 L 454.86 224.25 L 498.29 224.25 L 541.71 214.68 L 585.14 163.65 L 628.57 157.27 L 672.00 157.27 L 715.43 157.27 L 758.86 157.27 L 802.29 106.23 L 845.71 106.23 L 889.14 106.23 L 932.57 55.19 L 976.00 52.00 L 976.00 304 Z" fill="url(#fill-total-trend-black)"/>
+  <polyline class="line" points="64.00,278.48 107.43,291.24 150.86,291.24 194.29,291.24 237.71,291.24 281.14,291.24 324.57,291.24 368.00,284.86 411.43,272.10 454.86,224.25 498.29,224.25 541.71,214.68 585.14,163.65 628.57,157.27 672.00,157.27 715.43,157.27 758.86,157.27 802.29,106.23 845.71,106.23 889.14,106.23 932.57,55.19 976.00,52.00"/>
   <circle class="dot" cx="976.00" cy="52.00" r="4.5"/>
   
   <text class="axis" x="64.00" y="336" text-anchor="start">2026-10-09</text>
-  <text class="axis" x="246.40" y="336" text-anchor="middle">2026-10-13</text>
-  <text class="axis" x="428.80" y="336" text-anchor="middle">2026-10-17</text>
-  <text class="axis" x="611.20" y="336" text-anchor="middle">2026-10-21</text>
-  <text class="axis" x="793.60" y="336" text-anchor="middle">2026-10-25</text>
-  <text class="axis" x="976.00" y="336" text-anchor="end">2026-10-29</text>
-  <text class="latest" x="976" y="34" text-anchor="end">Latest total: 78</text>
+  <text class="axis" x="237.71" y="336" text-anchor="middle">2026-10-13</text>
+  <text class="axis" x="411.43" y="336" text-anchor="middle">2026-10-17</text>
+  <text class="axis" x="585.14" y="336" text-anchor="middle">2026-10-21</text>
+  <text class="axis" x="758.86" y="336" text-anchor="middle">2026-10-25</text>
+  <text class="axis" x="932.57" y="336" text-anchor="middle">2026-10-29</text>
+  <text class="axis" x="976.00" y="336" text-anchor="end">2026-10-30</text>
+  <text class="latest" x="976" y="34" text-anchor="end">Latest total: 79</text>
 </svg>
