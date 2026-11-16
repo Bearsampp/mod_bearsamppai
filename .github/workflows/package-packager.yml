@@ -35,9 +35,16 @@ jobs:
           copyright-holder: 'Bearsampp'
           copyright-start-year: '2026'
           license-file: 'LICENSE'
-          update-joomla-server: 'true'
-          commit-changes: 'true'
-          upload-artifact: 'false'
+          # Only publish a release, update the update server and commit changes
+          # on the main branch. Runs from any other branch are test builds: they
+          # still bump the manifest version and produce an installable package,
+          # but leave the changelog, updates.xml and releases untouched and only
+          # expose the package as a workflow artifact.
+          create-release: ${{ (github.ref_name == 'main' || github.base_ref == 'main') && 'true' || 'false' }}
+          update-joomla-server: ${{ (github.ref_name == 'main' || github.base_ref == 'main') && 'true' || 'false' }}
+          commit-changes: ${{ (github.ref_name == 'main' || github.base_ref == 'main') && 'true' || 'false' }}
+          generate-changelog: ${{ (github.ref_name == 'main' || github.base_ref == 'main') && 'true' || 'false' }}
+          upload-artifact: 'true'
           ignore-docs: 'true'
           ignore-stats: 'true'
           ignore-updates-xml: 'true'
