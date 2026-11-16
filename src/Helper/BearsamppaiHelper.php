@@ -83,6 +83,14 @@ class BearsamppaiHelper
 	private const LEGACY_DEFAULT_ENDPOINT = 'https://opencode.ai/zen/v1/chat/completions';
 
 	/**
+	 * Default OpenAI-compatible endpoint (OpenRouter).
+	 *
+	 * @var string
+	 * @since  2.4.7
+	 */
+	private const OPENROUTER_DEFAULT_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
+
+	/**
 	 * Default model name.
 	 *
 	 * @var string
@@ -218,12 +226,31 @@ class BearsamppaiHelper
 			return ['success' => false, 'error' => 'Empty message'];
 		}
 
+		$provider            = trim((string) $params->get('ai_provider', 'opencode'));
 		$apiKey              = trim((string) $params->get('ai_api_key', ''));
 		$model               = trim((string) $params->get('ai_model', self::DEFAULT_MODEL));
 		$customModel         = trim((string) $params->get('ai_custom_model', ''));
 		$fallbackModel       = trim((string) $params->get('ai_fallback_model', self::DEFAULT_FALLBACK_MODEL));
 		$customFallbackModel = trim((string) $params->get('ai_custom_fallback_model', ''));
 		$endpoint            = trim((string) $params->get('ai_endpoint', self::DEFAULT_ENDPOINT));
+
+		if ($provider === 'openrouter') {
+			if (
+				$endpoint === ''
+				|| $endpoint === self::DEFAULT_ENDPOINT
+				|| $endpoint === self::LEGACY_DEFAULT_ENDPOINT
+			) {
+				$endpoint = self::OPENROUTER_DEFAULT_ENDPOINT;
+			}
+		} else {
+			if ($endpoint === self::LEGACY_DEFAULT_ENDPOINT) {
+				$endpoint = self::DEFAULT_ENDPOINT;
+			}
+
+			if ($endpoint === self::OPENROUTER_DEFAULT_ENDPOINT) {
+				$endpoint = self::DEFAULT_ENDPOINT;
+			}
+		}
 
 		if ($model === '__custom__') {
 			$model = $customModel;
@@ -363,6 +390,14 @@ class BearsamppaiHelper
 				'Content-Type'  => 'application/json',
 				'Accept'        => 'application/json',
 			];
+
+			if (
+				$provider === 'openrouter'
+				|| parse_url($endpoint, PHP_URL_HOST) === 'openrouter.ai'
+			) {
+				$headers['HTTP-Referer'] = Uri::root();
+				$headers['X-Title']      = 'Bearsampp AI';
+			}
 
 			$timeout = (int) $params->get('request_timeout', 30);
 

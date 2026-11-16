@@ -68,6 +68,18 @@
 
 			<fieldset name="ai" label="MOD_BEARSAMPPAI_FIELDSET_AI_LABEL">
 				<field
+					name="ai_provider"
+					type="list"
+					label="MOD_BEARSAMPPAI_FIELD_AI_PROVIDER_LABEL"
+					description="MOD_BEARSAMPPAI_FIELD_AI_PROVIDER_DESC"
+					default="opencode"
+					filter="string"
+					>
+					<option value="opencode">OpenCode</option>
+					<option value="openrouter">OpenRouter</option>
+				</field>
+
+				<field
 					name="ai_api_key"
 					type="text"
 					label="MOD_BEARSAMPPAI_FIELD_AI_KEY_LABEL"
