@@ -58,15 +58,13 @@ class JFormFieldAimodel extends ListField
 		'qwen3.8-max' => ['Qwen3.8 Max', 'Paid: $2.00 input / $6.00 output', 'opencode'],
 		'openai/gpt-4o' => ['GPT-4o (OpenRouter)', 'Paid: $2.50 input / $10.00 output', 'openrouter'],
 		'openai/gpt-4o-mini' => ['GPT-4o mini (OpenRouter)', 'Paid: $0.15 input / $0.60 output', 'openrouter'],
-		'openai/gpt-4.1' => ['GPT-4.1 (OpenRouter)', 'Paid: $2.00 input / $8.00 output', 'openrouter'],
-		'anthropic/claude-3.5-sonnet' => ['Claude 3.5 Sonnet (OpenRouter)', 'Paid: $3.00 input / $15.00 output', 'openrouter'],
-		'anthropic/claude-3.7-sonnet' => ['Claude 3.7 Sonnet (OpenRouter)', 'Paid: $3.00 input / $15.00 output', 'openrouter'],
-		'google/gemini-2.0-flash-001' => ['Gemini 2.0 Flash (OpenRouter)', 'Paid: $0.10 input / $0.40 output', 'openrouter'],
 		'google/gemini-2.5-pro' => ['Gemini 2.5 Pro (OpenRouter)', 'Paid: $1.25 input / $10.00 output', 'openrouter'],
-		'meta-llama/llama-3.3-70b-instruct' => ['Llama 3.3 70B (OpenRouter)', 'Paid: $0.13 input / $0.30 output', 'openrouter'],
+		'google/gemini-2.5-flash' => ['Gemini 2.5 Flash (OpenRouter)', 'Paid: $0.30 input / $2.50 output', 'openrouter'],
+		'anthropic/claude-sonnet-4.5' => ['Claude Sonnet 4.5 (OpenRouter)', 'Paid: $3.00 input / $15.00 output', 'openrouter'],
+		'meta-llama/llama-3.3-70b-instruct' => ['Llama 3.3 70B (OpenRouter)', 'Paid: $0.71 input / $0.71 output', 'openrouter'],
 		'mistralai/mistral-large' => ['Mistral Large (OpenRouter)', 'Paid: $2.00 input / $6.00 output', 'openrouter'],
-		'deepseek/deepseek-chat' => ['DeepSeek V3 (OpenRouter)', 'Paid: $0.27 input / $1.10 output', 'openrouter'],
-		'qwen/qwen-2.5-72b-instruct' => ['Qwen 2.5 72B (OpenRouter)', 'Paid: $0.35 input / $0.40 output', 'openrouter'],
+		'deepseek/deepseek-chat' => ['DeepSeek V3 (OpenRouter)', 'Paid: $0.26 input / $1.03 output', 'openrouter'],
+		'qwen/qwen-2.5-72b-instruct' => ['Qwen 2.5 72B (OpenRouter)', 'Paid: $0.36 input / $0.40 output', 'openrouter'],
 	];
 
 	/**
