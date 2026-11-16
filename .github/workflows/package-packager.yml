@@ -44,7 +44,7 @@ jobs:
           update-joomla-server: ${{ (github.ref_name == 'main' || github.base_ref == 'main') && 'true' || 'false' }}
           commit-changes: ${{ (github.ref_name == 'main' || github.base_ref == 'main') && 'true' || 'false' }}
           generate-changelog: ${{ (github.ref_name == 'main' || github.base_ref == 'main') && 'true' || 'false' }}
-          upload-artifact: 'true'
+          upload-artifact: 'false'
           ignore-docs: 'true'
           ignore-stats: 'true'
           ignore-updates-xml: 'true'

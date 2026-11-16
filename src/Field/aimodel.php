@@ -168,7 +168,7 @@ class JFormFieldAimodel extends ListField
 			return $options;
 		}
 
-		if (in_array($value, self::OPENCODE_APP_ONLY_MODELS, true)) {
+		if ($provider === 'opencode' && in_array($value, self::OPENCODE_APP_ONLY_MODELS, true)) {
 			$options[] = HTMLHelper::_(
 				'select.option',
 				$value,
